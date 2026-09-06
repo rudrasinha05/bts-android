@@ -1,4 +1,4 @@
-package in.babatiffin.bts.feature.home
+package com.babatiffin.bts.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
