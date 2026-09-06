@@ -1,16 +1,17 @@
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.babatiffin.bts"
-    compileSdk = 37
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.babatiffin.bts"
         minSdk = 23
-        targetSdk = 37
+        targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
 
