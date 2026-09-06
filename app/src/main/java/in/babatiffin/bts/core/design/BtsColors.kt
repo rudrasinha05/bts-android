@@ -1,4 +1,4 @@
-package in.babatiffin.bts.core.design
+package com.babatiffin.bts.core.design
 
 import androidx.compose.ui.graphics.Color
 
