@@ -1,11 +1,11 @@
-package in.babatiffin.bts.navigation
+package com.babatiffin.bts.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import in.babatiffin.bts.feature.home.HomeScreen
-import in.babatiffin.bts.feature.menu.MenuScreen
+import com.babatiffin.bts.feature.home.HomeScreen
+import com.babatiffin.bts.feature.menu.MenuScreen
 
 @Composable
 fun BtsNavGraph() {
