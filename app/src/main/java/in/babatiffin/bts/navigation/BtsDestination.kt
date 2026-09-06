@@ -1,4 +1,4 @@
-package in.babatiffin.bts.navigation
+package com.babatiffin.bts.navigation
 
 sealed class BtsDestination(val route: String) {
     data object Home : BtsDestination("home")
