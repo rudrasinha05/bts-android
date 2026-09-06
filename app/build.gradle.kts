@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "in.babatiffin.bts"
+    namespace = "com.babatiffin.bts"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "in.babatiffin.bts"
+        applicationId = "com.babatiffin.bts"
         minSdk = 23
         targetSdk = 37
         versionCode = 1
