@@ -33,6 +33,8 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.babatiffin.bts.core.design.BtsSize
 import com.babatiffin.bts.core.design.BtsSpacing
@@ -54,7 +57,7 @@ private data class ShellItem(
     val icon: ImageVector,
 )
 
-private val bottomItems = listOf(
+private val primaryItems = listOf(
     ShellItem(BtsDestination.Home.route, "Home", Icons.Default.Home),
     ShellItem(BtsDestination.Menu.route, "Menu", Icons.Default.RestaurantMenu),
     ShellItem(BtsDestination.BuildMeal.route, "Build", Icons.Default.Build),
@@ -80,6 +83,7 @@ fun BtsAppShell(
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val useNavigationRail = LocalConfiguration.current.screenWidthDp >= 600
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -116,66 +120,123 @@ fun BtsAppShell(
             }
         },
     ) {
-        Scaffold(
-            topBar = {
-                Surface(shadowElevation = 2.dp) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(BtsSize.TopBarHeight)
-                            .padding(horizontal = BtsSpacing.Sm),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Open navigation")
-                        }
-                        Spacer(Modifier.width(BtsSpacing.Sm))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = routeTitle(currentRoute),
-                                style = MaterialTheme.typography.titleLarge,
-                            )
-                            Text(
-                                text = "Baba Tiffin Services",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        IconButton(onClick = onToggleTheme) {
-                            Icon(
-                                imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                contentDescription = if (isDarkTheme) "Use light mode" else "Use dark mode",
-                            )
-                        }
-                        IconButton(onClick = { }) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                        }
-                        IconButton(onClick = { onNavigate(BtsDestination.Cart.route) }) {
-                            Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
-                        }
-                    }
-                }
-            },
-            bottomBar = {
-                NavigationBar(modifier = Modifier.height(BtsSize.BottomBarHeight)) {
-                    bottomItems.forEach { item ->
-                        NavigationBarItem(
-                            selected = currentRoute == item.route,
-                            onClick = { onNavigate(item.route) },
-                            icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.label,
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            },
-                            label = { Text(item.label) },
+        if (useNavigationRail) {
+            Row {
+                BtsNavigationRail(
+                    currentRoute = currentRoute,
+                    onNavigate = onNavigate,
+                )
+                Scaffold(
+                    modifier = Modifier.weight(1f),
+                    topBar = {
+                        BtsTopBar(
+                            currentRoute = currentRoute,
+                            isDarkTheme = isDarkTheme,
+                            onToggleTheme = onToggleTheme,
+                            onOpenDrawer = { scope.launch { drawerState.open() } },
+                            onOpenCart = { onNavigate(BtsDestination.Cart.route) },
                         )
+                    },
+                    content = content,
+                )
+            }
+        } else {
+            Scaffold(
+                topBar = {
+                    BtsTopBar(
+                        currentRoute = currentRoute,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = onToggleTheme,
+                        onOpenDrawer = { scope.launch { drawerState.open() } },
+                        onOpenCart = { onNavigate(BtsDestination.Cart.route) },
+                    )
+                },
+                bottomBar = {
+                    NavigationBar(modifier = Modifier.height(BtsSize.BottomBarHeight)) {
+                        primaryItems.forEach { item ->
+                            NavigationBarItem(
+                                selected = currentRoute == item.route,
+                                onClick = { onNavigate(item.route) },
+                                icon = {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.label,
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                },
+                                label = { Text(item.label) },
+                            )
+                        }
                     }
-                }
-            },
-            content = content,
-        )
+                },
+                content = content,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BtsNavigationRail(
+    currentRoute: String?,
+    onNavigate: (String) -> Unit,
+) {
+    NavigationRail(modifier = Modifier.width(BtsSize.RailWidth)) {
+        Spacer(Modifier.height(BtsSpacing.Sm))
+        primaryItems.forEach { item ->
+            NavigationRailItem(
+                selected = currentRoute == item.route,
+                onClick = { onNavigate(item.route) },
+                icon = { Icon(item.icon, contentDescription = item.label) },
+                label = { Text(item.label) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun BtsTopBar(
+    currentRoute: String?,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+    onOpenDrawer: () -> Unit,
+    onOpenCart: () -> Unit,
+) {
+    Surface(shadowElevation = 2.dp) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BtsSize.TopBarHeight)
+                .padding(horizontal = BtsSpacing.Sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onOpenDrawer) {
+                Icon(Icons.Default.Menu, contentDescription = "Open navigation")
+            }
+            Spacer(Modifier.width(BtsSpacing.Sm))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = routeTitle(currentRoute),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    text = "Baba Tiffin Services",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(onClick = onToggleTheme) {
+                Icon(
+                    imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                    contentDescription = if (isDarkTheme) "Use light mode" else "Use dark mode",
+                )
+            }
+            IconButton(onClick = { }) {
+                Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+            }
+            IconButton(onClick = onOpenCart) {
+                Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
+            }
+        }
     }
 }
 
