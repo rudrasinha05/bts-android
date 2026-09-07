@@ -1,5 +1,3 @@
-[develop 003fd31] fix(m2): strictly constrain browser dependency
- 1 file changed, 3 insertions(+), 1 deletion(-)
 import java.util.Properties
 
 plugins {
