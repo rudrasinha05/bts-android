@@ -1,3 +1,5 @@
+[develop 003fd31] fix(m2): strictly constrain browser dependency
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 import java.util.Properties
 
 plugins {
@@ -76,7 +78,9 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.ktor:ktor-client-android:3.3.0")
     // Supabase Auth uses Custom Tabs; keep AndroidX Browser compatible with frozen AGP 8.6.
-    implementation("androidx.browser:browser:1.8.0")
+    implementation("androidx.browser:browser") {
+        version { strictly("1.8.0") }
+    }
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
