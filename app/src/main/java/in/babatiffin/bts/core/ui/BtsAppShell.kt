@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.ReceiptLong
@@ -71,6 +73,8 @@ private val drawerItems = listOf(
 @Composable
 fun BtsAppShell(
     currentRoute: String?,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     onNavigate: (String) -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
@@ -135,6 +139,12 @@ fun BtsAppShell(
                                 text = "Baba Tiffin Services",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        IconButton(onClick = onToggleTheme) {
+                            Icon(
+                                imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = if (isDarkTheme) "Use light mode" else "Use dark mode",
                             )
                         }
                         IconButton(onClick = { }) {
