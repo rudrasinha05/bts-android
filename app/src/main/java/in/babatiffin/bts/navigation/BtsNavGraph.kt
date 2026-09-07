@@ -15,7 +15,10 @@ import com.babatiffin.bts.feature.home.HomeScreen
 import com.babatiffin.bts.feature.menu.MenuScreen
 
 @Composable
-fun BtsNavGraph() {
+fun BtsNavGraph(
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -33,6 +36,8 @@ fun BtsNavGraph() {
 
     BtsAppShell(
         currentRoute = currentRoute,
+        isDarkTheme = isDarkTheme,
+        onToggleTheme = onToggleTheme,
         onNavigate = ::navigate,
     ) { innerPadding ->
         NavHost(
