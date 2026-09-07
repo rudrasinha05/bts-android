@@ -43,6 +43,7 @@ fun BtsTheme(
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkScheme else LightScheme,
+        typography = BtsTypography,
         content = content,
     )
 }
