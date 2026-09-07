@@ -10,7 +10,7 @@ Last updated: 2026-09-07
 
 ## Milestones
 - M0 Foundation + repository + architecture — COMPLETE
-- M1 Design system + shell + navigation — IN PROGRESS
+- M1 Design system + shell + navigation — CODE COMPLETE, VALIDATION PENDING
 - M2 Backend runtime connection + auth foundation — NOT STARTED
 - M3 Home + menu discovery — NOT STARTED
 - M4 Meal details + universal add-ons — NOT STARTED
@@ -25,14 +25,16 @@ Last updated: 2026-09-07
 - M13 Hardening — NOT STARTED
 - M14 Acceptance testing + APK/AAB — NOT STARTED
 
-## M1 delivered so far
+## M1 delivered
 - BTS light/dark color tokens
 - Typography contract
 - Spacing/radius/shell dimensions
 - Persistent top bar
-- Persistent five-item bottom navigation
+- Runtime light/dark theme toggle
+- Persistent five-item mobile bottom navigation
+- Adaptive left navigation rail for tablet/wide layouts
 - Hamburger navigation drawer
-- Cart entry point in top bar
+- Notification and cart entry points in top bar
 - Route shell for Home, Menu, Plans, Dashboard, Build Meal, Subscription, Orders, Nutrition, Profile, Support and Cart
 
 ## M1 exit criteria
@@ -42,5 +44,6 @@ Last updated: 2026-09-07
 4. Drawer opens/closes and navigates.
 5. Cart top-bar action navigates to Cart.
 6. Light/dark theme renders without crash.
+7. Wide/tablet layout switches to the navigation rail.
 
 Do not start M2 until these M1 exit criteria are satisfied.
