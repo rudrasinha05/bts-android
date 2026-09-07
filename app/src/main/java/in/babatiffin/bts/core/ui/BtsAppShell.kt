@@ -78,6 +78,7 @@ fun BtsAppShell(
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
     onNavigate: (String) -> Unit,
+    isAuthenticated: Boolean,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -134,6 +135,7 @@ fun BtsAppShell(
                             onToggleTheme = onToggleTheme,
                             onOpenDrawer = { scope.launch { drawerState.open() } },
                             onOpenCart = { onNavigate(BtsDestination.Cart.route) },
+                            onOpenAccount = { onNavigate(if (isAuthenticated) BtsDestination.Profile.route else BtsDestination.Auth.route) },
                         )
                     },
                     content = content,
@@ -148,6 +150,7 @@ fun BtsAppShell(
                         onToggleTheme = onToggleTheme,
                         onOpenDrawer = { scope.launch { drawerState.open() } },
                         onOpenCart = { onNavigate(BtsDestination.Cart.route) },
+                        onOpenAccount = { onNavigate(if (isAuthenticated) BtsDestination.Profile.route else BtsDestination.Auth.route) },
                     )
                 },
                 bottomBar = {
@@ -199,6 +202,7 @@ private fun BtsTopBar(
     onToggleTheme: () -> Unit,
     onOpenDrawer: () -> Unit,
     onOpenCart: () -> Unit,
+    onOpenAccount: () -> Unit,
 ) {
     Surface(shadowElevation = 2.dp) {
         Row(
@@ -235,6 +239,9 @@ private fun BtsTopBar(
             IconButton(onClick = onOpenCart) {
                 Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
             }
+            IconButton(onClick = onOpenAccount) {
+                Icon(Icons.Default.AccountCircle, contentDescription = "Account")
+            }
         }
     }
 }
@@ -251,5 +258,6 @@ private fun routeTitle(route: String?): String = when (route) {
     BtsDestination.Profile.route -> "Profile"
     BtsDestination.Support.route -> "Support"
     BtsDestination.Cart.route -> "Cart"
+    BtsDestination.Auth.route -> "Login"
     else -> "BTS"
 }

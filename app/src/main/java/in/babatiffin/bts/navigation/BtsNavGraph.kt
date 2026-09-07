@@ -13,6 +13,14 @@ import com.babatiffin.bts.core.ui.BtsAppShell
 import com.babatiffin.bts.feature.common.PlaceholderScreen
 import com.babatiffin.bts.feature.home.HomeScreen
 import com.babatiffin.bts.feature.menu.MenuScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
+import com.babatiffin.bts.data.auth.SupabaseAuthRepository
+import com.babatiffin.bts.data.backend.SupabaseProvider
+import com.babatiffin.bts.feature.auth.AuthScreen
+import com.babatiffin.bts.feature.auth.AuthViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 
 @Composable
 fun BtsNavGraph(
@@ -22,6 +30,14 @@ fun BtsNavGraph(
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val authViewModel: AuthViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = AuthViewModel(
+            repository = SupabaseProvider.client?.let(::SupabaseAuthRepository),
+            configured = SupabaseProvider.isConfigured,
+        ) as T
+    })
+    val authState by authViewModel.state.collectAsState()
 
     fun navigate(route: String) {
         if (route == currentRoute) return
@@ -39,6 +55,7 @@ fun BtsNavGraph(
         isDarkTheme = isDarkTheme,
         onToggleTheme = onToggleTheme,
         onNavigate = ::navigate,
+        isAuthenticated = authState.authenticated,
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -70,13 +87,16 @@ fun BtsNavGraph(
                 PlaceholderScreen("Nutrition", "Nutrition tracking will use the existing meal and nutrition records.")
             }
             composable(BtsDestination.Profile.route) {
-                PlaceholderScreen("Profile", "Profile, addresses and customer preferences will live here.")
+                AuthScreen(state = authState, viewModel = authViewModel)
             }
             composable(BtsDestination.Support.route) {
                 PlaceholderScreen("Support", "Support tickets and customer help will be available here.")
             }
             composable(BtsDestination.Cart.route) {
                 PlaceholderScreen("Cart", "Persistent configured meal lines and editable add-ons will be implemented in the cart milestone.")
+            }
+            composable(BtsDestination.Auth.route) {
+                AuthScreen(state = authState, viewModel = authViewModel)
             }
         }
     }

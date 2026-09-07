@@ -1,6 +1,7 @@
 package com.babatiffin.bts
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,11 +12,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.babatiffin.bts.core.design.BtsTheme
 import com.babatiffin.bts.navigation.BtsNavGraph
+import com.babatiffin.bts.data.backend.SupabaseProvider
+import io.github.jan.supabase.auth.handleDeeplinks
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        SupabaseProvider.client?.handleDeeplinks(intent)
         setContent {
             val systemDark = isSystemInDarkTheme()
             var darkTheme by rememberSaveable { mutableStateOf(systemDark) }
@@ -27,5 +31,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        SupabaseProvider.client?.handleDeeplinks(intent)
     }
 }

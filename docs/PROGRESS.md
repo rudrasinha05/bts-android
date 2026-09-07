@@ -10,8 +10,8 @@ Last updated: 2026-09-07
 
 ## Milestones
 - M0 Foundation + repository + architecture — COMPLETE
-- M1 Design system + shell + navigation — CODE COMPLETE, VALIDATION PENDING
-- M2 Backend runtime connection + auth foundation — NOT STARTED
+- M1 Design system + shell + navigation — COMPLETE (emulator validation confirmed)
+- M2 Backend runtime connection + auth foundation — IN PROGRESS
 - M3 Home + menu discovery — NOT STARTED
 - M4 Meal details + universal add-ons — NOT STARTED
 - M5 Cart + persisted configuration lines — NOT STARTED
@@ -47,3 +47,11 @@ Last updated: 2026-09-07
 7. Wide/tablet layout switches to the navigation rail.
 
 Do not start M2 until these M1 exit criteria are satisfied.
+
+## M2 implementation started
+- Supabase Kotlin client is pinned and isolated under `data/`.
+- Runtime URL and publishable key come from local/CI configuration; secrets are not committed.
+- Auth repository supports email/password sign-in and sign-up, Indian mobile OTP, Google OAuth and sign-out.
+- Session state is exposed to Compose through an auth ViewModel.
+- Android deep-link callback is `bts://auth`.
+- No schema, migration, table, RLS policy or production data change is part of M2.
