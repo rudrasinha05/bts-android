@@ -38,6 +38,15 @@ class MealDiscoveryViewModel(private val repository: MealRepository?) : ViewMode
 
     fun selectCategory(value: String) { _state.value = _state.value.copy(category = value) }
     fun selectFoodType(value: String) { _state.value = _state.value.copy(foodType = value) }
+    fun startBuilder() {
+        _state.value = _state.value.copy(category = "all", foodType = "all", selectedMealId = null, addOnQuantities = emptyMap())
+    }
+    fun selectBuilderCategory(value: String) {
+        _state.value = _state.value.copy(category = value, foodType = "all", selectedMealId = null, addOnQuantities = emptyMap())
+    }
+    fun selectBuilderFoodType(value: String) {
+        _state.value = _state.value.copy(foodType = value, selectedMealId = null, addOnQuantities = emptyMap())
+    }
     fun selectMeal(id: String) {
         if (_state.value.selectedMealId != id) {
             _state.value = _state.value.copy(selectedMealId = id, addOnQuantities = emptyMap())

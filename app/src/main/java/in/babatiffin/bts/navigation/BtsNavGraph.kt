@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.babatiffin.bts.data.cart.DataStoreCartRepository
 import com.babatiffin.bts.feature.cart.CartScreen
 import com.babatiffin.bts.feature.cart.CartViewModel
+import com.babatiffin.bts.feature.buildmeal.BuildMealScreen
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -150,7 +151,19 @@ fun BtsNavGraph(
                 PlaceholderScreen("Dashboard", "Customer dashboard shell is ready for backend-driven widgets.")
             }
             composable(BtsDestination.BuildMeal.route) {
-                PlaceholderScreen("Build Meal", "The controlled meal builder will be implemented after menu and add-on data integration.")
+                LaunchedEffect(Unit) { mealViewModel.startBuilder() }
+                BuildMealScreen(
+                    state = mealState,
+                    onCategory = mealViewModel::selectBuilderCategory,
+                    onFoodType = mealViewModel::selectBuilderFoodType,
+                    onMeal = mealViewModel::selectMeal,
+                    onAddOn = mealViewModel::changeAddOn,
+                    onRetry = mealViewModel::refresh,
+                    onAddToCart = {
+                        cartViewModel.addConfiguredMeal(mealState)
+                        navigate(BtsDestination.Cart.route)
+                    },
+                )
             }
             composable(BtsDestination.Subscription.route) {
                 PlaceholderScreen("Subscription", "Subscription lifecycle controls will reuse the existing BTS subscriptions data.")
