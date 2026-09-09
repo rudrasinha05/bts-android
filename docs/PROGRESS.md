@@ -13,8 +13,8 @@ Last updated: 2026-09-09
 - M1 Design system + shell + navigation — COMPLETE (emulator validation confirmed)
 - M2 Backend runtime connection + auth foundation — COMPLETE (CI + emulator OAuth validation confirmed)
 - M3 Home + menu discovery — COMPLETE (CI + emulator validation confirmed)
-- M4 Meal details + universal add-ons — IN PROGRESS
-- M5 Cart + persisted configuration lines — NOT STARTED
+- M4 Meal details + universal add-ons — COMPLETE (CI + emulator validation confirmed)
+- M5 Cart + persisted configuration lines — IN PROGRESS
 - M6 Build Meal engine — NOT STARTED
 - M7 Subscription lifecycle — NOT STARTED
 - M8 Orders + order state timeline — NOT STARTED
@@ -80,3 +80,10 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Universal add-ons load from active, available `meals` rows marked `is_addon=true`.
 - Add-on quantity controls calculate a configured total without crossing into M5 cart persistence.
 - No schema, table, migration, RLS policy or production data change is part of M4.
+
+## M5 implementation started
+- Configured meal and add-on selections persist locally through Preferences DataStore.
+- Distinct configuration lines preserve meal, add-ons, quantities and calculated totals.
+- Cart supports quantity changes, line removal, clearing and subtotal calculation.
+- Checkout and backend order creation remain isolated to their frozen milestones.
+- No schema, table, migration, RLS policy or production data change is part of M5.

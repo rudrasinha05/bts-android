@@ -30,6 +30,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
+import com.babatiffin.bts.data.cart.DataStoreCartRepository
+import com.babatiffin.bts.feature.cart.CartScreen
+import com.babatiffin.bts.feature.cart.CartViewModel
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -63,6 +67,12 @@ fun BtsNavGraph(
         ) as T
     })
     val mealState by mealViewModel.state.collectAsState()
+    val context = LocalContext.current
+    val cartViewModel: CartViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = CartViewModel(DataStoreCartRepository(context)) as T
+    })
+    val cartLines by cartViewModel.lines.collectAsState()
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
@@ -123,7 +133,15 @@ fun BtsNavGraph(
             ) { entry ->
                 val mealId = entry.arguments?.getString("mealId")
                 LaunchedEffect(mealId) { mealId?.let(mealViewModel::selectMeal) }
-                MealDetailScreen(state = mealState, onChangeAddOn = mealViewModel::changeAddOn, onRetry = mealViewModel::refresh)
+                MealDetailScreen(
+                    state = mealState,
+                    onChangeAddOn = mealViewModel::changeAddOn,
+                    onRetry = mealViewModel::refresh,
+                    onAddToCart = {
+                        cartViewModel.addConfiguredMeal(mealState)
+                        navigate(BtsDestination.Cart.route)
+                    },
+                )
             }
             composable(BtsDestination.Plans.route) {
                 PlaceholderScreen("Plans", "Subscription plans will be connected to the existing BTS backend in the scheduled milestone.")
@@ -150,7 +168,12 @@ fun BtsNavGraph(
                 PlaceholderScreen("Support", "Support tickets and customer help will be available here.")
             }
             composable(BtsDestination.Cart.route) {
-                PlaceholderScreen("Cart", "Persistent configured meal lines and editable add-ons will be implemented in the cart milestone.")
+                CartScreen(
+                    lines = cartLines,
+                    onChangeQuantity = cartViewModel::changeQuantity,
+                    onRemove = cartViewModel::remove,
+                    onClear = cartViewModel::clear,
+                )
             }
             composable(BtsDestination.Auth.route) {
                 AuthScreen(state = authState, viewModel = authViewModel)

@@ -22,6 +22,7 @@ fun MealDetailScreen(
     state: MealDiscoveryState,
     onChangeAddOn: (String, Int) -> Unit,
     onRetry: () -> Unit,
+    onAddToCart: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val meal = state.selectedMeal
@@ -63,7 +64,7 @@ fun MealDetailScreen(
             }
             item {
                 Text("Configured total: ₹${state.configuredTotal.toInt()}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("Cart persistence will be enabled in the next frozen milestone.", style = MaterialTheme.typography.bodySmall)
+                Button(onClick = onAddToCart, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { Text("Add configured meal to cart") }
             }
         }
     }
