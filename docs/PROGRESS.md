@@ -15,8 +15,8 @@ Last updated: 2026-09-09
 - M3 Home + menu discovery — COMPLETE (CI + emulator validation confirmed)
 - M4 Meal details + universal add-ons — COMPLETE (CI + emulator validation confirmed)
 - M5 Cart + persisted configuration lines — COMPLETE (CI + emulator validation confirmed)
-- M6 Build Meal engine — IN PROGRESS
-- M7 Subscription lifecycle — NOT STARTED
+- M6 Build Meal engine — COMPLETE (CI + emulator validation confirmed)
+- M7 Subscription lifecycle — IN PROGRESS
 - M8 Orders + order state timeline — NOT STARTED
 - M9 Checkout + payments + wallet — NOT STARTED
 - M10 Profile + addresses + nutrition tracker + support — NOT STARTED
@@ -94,3 +94,10 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Builder calculates the configured total and hands the exact configuration to the persisted M5 cart.
 - Selection guards prevent incomplete meals and cap add-on quantities.
 - No schema, table, migration, RLS policy or production data change is part of M6.
+
+## M7 implementation started
+- Active plans load from the existing `subscription_plans` table.
+- Authenticated customer subscriptions load through RLS from `subscriptions`.
+- Existing subscriptions expose pause, resume and cancel actions with user-id scoped updates.
+- New paid subscription activation remains isolated to M9 checkout/payments.
+- No schema, table, migration, RLS policy or production data change is part of M7.

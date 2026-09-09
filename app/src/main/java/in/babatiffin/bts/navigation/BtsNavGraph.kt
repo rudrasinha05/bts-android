@@ -35,6 +35,10 @@ import com.babatiffin.bts.data.cart.DataStoreCartRepository
 import com.babatiffin.bts.feature.cart.CartScreen
 import com.babatiffin.bts.feature.cart.CartViewModel
 import com.babatiffin.bts.feature.buildmeal.BuildMealScreen
+import com.babatiffin.bts.data.subscription.SupabaseSubscriptionRepository
+import com.babatiffin.bts.feature.subscription.ManageSubscriptionScreen
+import com.babatiffin.bts.feature.subscription.PlansScreen
+import com.babatiffin.bts.feature.subscription.SubscriptionViewModel
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -74,6 +78,14 @@ fun BtsNavGraph(
         override fun <T : ViewModel> create(modelClass: Class<T>): T = CartViewModel(DataStoreCartRepository(context)) as T
     })
     val cartLines by cartViewModel.lines.collectAsState()
+    val subscriptionViewModel: SubscriptionViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = SubscriptionViewModel(
+            SupabaseProvider.client?.let(::SupabaseSubscriptionRepository),
+        ) as T
+    })
+    val subscriptionState by subscriptionViewModel.state.collectAsState()
+    LaunchedEffect(authState.userId) { subscriptionViewModel.loadForUser(authState.userId) }
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
@@ -145,7 +157,7 @@ fun BtsNavGraph(
                 )
             }
             composable(BtsDestination.Plans.route) {
-                PlaceholderScreen("Plans", "Subscription plans will be connected to the existing BTS backend in the scheduled milestone.")
+                PlansScreen(state = subscriptionState, onManage = { navigate(BtsDestination.Subscription.route) })
             }
             composable(BtsDestination.Dashboard.route) {
                 PlaceholderScreen("Dashboard", "Customer dashboard shell is ready for backend-driven widgets.")
@@ -166,7 +178,7 @@ fun BtsNavGraph(
                 )
             }
             composable(BtsDestination.Subscription.route) {
-                PlaceholderScreen("Subscription", "Subscription lifecycle controls will reuse the existing BTS subscriptions data.")
+                ManageSubscriptionScreen(state = subscriptionState, onStatus = subscriptionViewModel::setStatus)
             }
             composable(BtsDestination.Orders.route) {
                 PlaceholderScreen("Orders", "Order history and live status timeline will appear here.")

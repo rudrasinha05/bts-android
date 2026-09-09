@@ -15,6 +15,7 @@ data class AuthUiState(
     val loading: Boolean = true,
     val authenticated: Boolean = false,
     val userLabel: String? = null,
+    val userId: String? = null,
     val message: String? = null,
     val otpSent: Boolean = false,
     val roles: Set<String> = emptySet(),
@@ -35,12 +36,13 @@ class AuthViewModel(private val repository: AuthRepository?, configured: Boolean
                         _state.value.copy(
                             loading = false, authenticated = true,
                             userLabel = user?.email ?: user?.phone,
+                            userId = user?.id,
                             roles = roles,
                             message = null,
                         )
                     }
                     is SessionStatus.Initializing -> _state.value.copy(loading = true)
-                    else -> _state.value.copy(loading = false, authenticated = false, userLabel = null, roles = emptySet())
+                    else -> _state.value.copy(loading = false, authenticated = false, userLabel = null, userId = null, roles = emptySet())
                 }
             }
         }
