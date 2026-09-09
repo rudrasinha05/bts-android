@@ -25,6 +25,7 @@ fun MenuScreen(
     onCategory: (String) -> Unit,
     onFoodType: (String) -> Unit,
     onRetry: () -> Unit,
+    onOpenMeal: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.padding(horizontal = 16.dp)) {
@@ -50,7 +51,7 @@ fun MenuScreen(
             ) {
                 items(state.visibleMeals.size) { index ->
                     val meal = state.visibleMeals[index]
-                    Card(Modifier.fillMaxWidth()) {
+                    Card(onClick = { onOpenMeal(meal.id) }, modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(meal.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)

@@ -9,11 +9,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.babatiffin.bts.core.ui.BtsAppShell
 import com.babatiffin.bts.feature.common.PlaceholderScreen
 import com.babatiffin.bts.feature.home.HomeScreen
 import com.babatiffin.bts.feature.menu.MenuScreen
 import com.babatiffin.bts.feature.menu.MealDiscoveryViewModel
+import com.babatiffin.bts.feature.menu.MealDetailScreen
 import com.babatiffin.bts.data.menu.SupabaseMealRepository
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
@@ -98,7 +101,12 @@ fun BtsNavGraph(
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(BtsDestination.Home.route) {
-                HomeScreen(state = mealState, onOpenMenu = { navigate(BtsDestination.Menu.route) }, onRetry = mealViewModel::refresh)
+                HomeScreen(
+                    state = mealState,
+                    onOpenMenu = { navigate(BtsDestination.Menu.route) },
+                    onOpenMeal = { id -> mealViewModel.selectMeal(id); navController.navigate(BtsDestination.MealDetail.createRoute(id)) },
+                    onRetry = mealViewModel::refresh,
+                )
             }
             composable(BtsDestination.Menu.route) {
                 MenuScreen(
@@ -106,7 +114,16 @@ fun BtsNavGraph(
                     onCategory = mealViewModel::selectCategory,
                     onFoodType = mealViewModel::selectFoodType,
                     onRetry = mealViewModel::refresh,
+                    onOpenMeal = { id -> mealViewModel.selectMeal(id); navController.navigate(BtsDestination.MealDetail.createRoute(id)) },
                 )
+            }
+            composable(
+                route = BtsDestination.MealDetail.route,
+                arguments = listOf(navArgument("mealId") { type = NavType.StringType }),
+            ) { entry ->
+                val mealId = entry.arguments?.getString("mealId")
+                LaunchedEffect(mealId) { mealId?.let(mealViewModel::selectMeal) }
+                MealDetailScreen(state = mealState, onChangeAddOn = mealViewModel::changeAddOn, onRetry = mealViewModel::refresh)
             }
             composable(BtsDestination.Plans.route) {
                 PlaceholderScreen("Plans", "Subscription plans will be connected to the existing BTS backend in the scheduled milestone.")

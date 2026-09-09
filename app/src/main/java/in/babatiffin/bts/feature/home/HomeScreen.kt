@@ -21,6 +21,7 @@ import com.babatiffin.bts.feature.menu.MealDiscoveryState
 fun HomeScreen(
     state: MealDiscoveryState,
     onOpenMenu: () -> Unit,
+    onOpenMeal: (String) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -45,7 +46,7 @@ fun HomeScreen(
             state.error != null -> item { Column { Text(state.error); Button(onClick = onRetry) { Text("Retry") } } }
             else -> items(state.meals.take(4).size) { index ->
                 val meal = state.meals[index]
-                Card(Modifier.fillMaxWidth()) {
+                Card(onClick = { onOpenMeal(meal.id) }, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column(Modifier.weight(1f)) {
                             Text(meal.name, style = MaterialTheme.typography.titleMedium)
