@@ -4,6 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 val localProperties = Properties().apply {
@@ -75,6 +76,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.ktor:ktor-client-android:3.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     // Supabase Auth uses Custom Tabs; keep AndroidX Browser compatible with frozen AGP 8.6.
     implementation("androidx.browser:browser") {
         version { strictly("1.8.0") }

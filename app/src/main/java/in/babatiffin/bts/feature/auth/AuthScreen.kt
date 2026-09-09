@@ -32,6 +32,7 @@ fun AuthScreen(state: AuthUiState, viewModel: AuthViewModel, modifier: Modifier 
         }
         if (state.authenticated) {
             Text(state.userLabel ?: "Signed in")
+            Text("Role: ${state.roles.joinToString().ifBlank { "customer" }}")
             Button(onClick = viewModel::signOut, enabled = !state.loading) { Text("Sign out") }
             return@Column
         }

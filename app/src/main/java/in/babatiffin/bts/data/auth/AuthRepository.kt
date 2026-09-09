@@ -7,6 +7,9 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.builtin.OTP
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.serialization.Serializable
 
 interface AuthRepository {
     val sessionStatus: Flow<SessionStatus>
@@ -16,7 +19,11 @@ interface AuthRepository {
     suspend fun verifyPhoneOtp(phone: String, token: String)
     suspend fun signInWithGoogle()
     suspend fun signOut()
+    suspend fun loadRoles(userId: String): Set<String>
 }
+
+@Serializable
+private data class UserRoleRow(val role: String)
 
 class SupabaseAuthRepository(private val client: io.github.jan.supabase.SupabaseClient) : AuthRepository {
     override val sessionStatus = client.auth.sessionStatus
@@ -42,6 +49,12 @@ class SupabaseAuthRepository(private val client: io.github.jan.supabase.Supabase
 
     override suspend fun signInWithGoogle() { client.auth.signInWith(Google, redirectUrl = "bts://auth") }
     override suspend fun signOut() { client.auth.signOut() }
+
+    override suspend fun loadRoles(userId: String): Set<String> = client
+        .from("user_roles")
+        .select(columns = Columns.list("role")) { filter { eq("user_id", userId) } }
+        .decodeList<UserRoleRow>()
+        .mapTo(linkedSetOf()) { it.role }
 
     private fun normalizeIndianPhone(value: String): String {
         val digits = value.filter(Char::isDigit).removePrefix("91").takeLast(10)

@@ -17,6 +17,7 @@ data class AuthUiState(
     val userLabel: String? = null,
     val message: String? = null,
     val otpSent: Boolean = false,
+    val roles: Set<String> = emptySet(),
 )
 
 class AuthViewModel(private val repository: AuthRepository?, configured: Boolean) : ViewModel() {
@@ -28,13 +29,18 @@ class AuthViewModel(private val repository: AuthRepository?, configured: Boolean
         else viewModelScope.launch {
             repository.sessionStatus.collectLatest { status ->
                 _state.value = when (status) {
-                    is SessionStatus.Authenticated -> _state.value.copy(
-                        loading = false, authenticated = true,
-                        userLabel = status.session.user?.email ?: status.session.user?.phone,
-                        message = null,
-                    )
+                    is SessionStatus.Authenticated -> {
+                        val user = status.session.user
+                        val roles = user?.id?.let { runCatching { repository.loadRoles(it) }.getOrDefault(emptySet()) }.orEmpty()
+                        _state.value.copy(
+                            loading = false, authenticated = true,
+                            userLabel = user?.email ?: user?.phone,
+                            roles = roles,
+                            message = null,
+                        )
+                    }
                     is SessionStatus.Initializing -> _state.value.copy(loading = true)
-                    else -> _state.value.copy(loading = false, authenticated = false, userLabel = null)
+                    else -> _state.value.copy(loading = false, authenticated = false, userLabel = null, roles = emptySet())
                 }
             }
         }

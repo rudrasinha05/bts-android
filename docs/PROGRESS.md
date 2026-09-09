@@ -55,3 +55,15 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Session state is exposed to Compose through an auth ViewModel.
 - Android deep-link callback is `bts://auth`.
 - No schema, migration, table, RLS policy or production data change is part of M2.
+- Authenticated sessions load application roles from the existing `user_roles` table through RLS.
+- Protected customer routes redirect guests to Auth and resume the requested destination after sign-in.
+
+## M2 live backend validation
+- Authoritative BTS project: `fgrhxihpvuxjmkbqvlik`.
+- Project URL and client-safe publishable key validated against the live Data API.
+- Existing `meals` endpoint returns HTTP 200.
+- Existing `user_roles` endpoint returns HTTP 200 and an empty anonymous result, consistent with RLS protection.
+- Email auth is enabled and the Google provider has been configured for the BTS Android OAuth callback.
+- Google sign-in still requires an emulator/device round-trip validation before M2 can be marked complete.
+- Phone OTP remains provider-dependent and is not an M2 completion blocker.
+- Client-safe credentials remain local/CI configuration and are not committed.

@@ -21,6 +21,19 @@ import com.babatiffin.bts.feature.auth.AuthScreen
 import com.babatiffin.bts.feature.auth.AuthViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+
+private val authRequiredRoutes = setOf(
+    BtsDestination.Dashboard.route,
+    BtsDestination.BuildMeal.route,
+    BtsDestination.Subscription.route,
+    BtsDestination.Orders.route,
+    BtsDestination.Profile.route,
+    BtsDestination.Support.route,
+)
 
 @Composable
 fun BtsNavGraph(
@@ -38,8 +51,14 @@ fun BtsNavGraph(
         ) as T
     })
     val authState by authViewModel.state.collectAsState()
+    var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
+        if (route in authRequiredRoutes && !authState.authenticated) {
+            pendingRoute = route
+            if (currentRoute != BtsDestination.Auth.route) navController.navigate(BtsDestination.Auth.route) { launchSingleTop = true }
+            return
+        }
         if (route == currentRoute) return
         navController.navigate(route) {
             launchSingleTop = true
@@ -47,6 +66,13 @@ fun BtsNavGraph(
             popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
             }
+        }
+    }
+
+    LaunchedEffect(authState.authenticated) {
+        if (authState.authenticated) pendingRoute?.let { destination ->
+            pendingRoute = null
+            navigate(destination)
         }
     }
 
