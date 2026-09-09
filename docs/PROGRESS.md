@@ -1,6 +1,6 @@
 # BTS Android Progress
 
-Last updated: 2026-09-07
+Last updated: 2026-09-09
 
 ## BDR status
 - Architecture: FROZEN
@@ -11,8 +11,8 @@ Last updated: 2026-09-07
 ## Milestones
 - M0 Foundation + repository + architecture — COMPLETE
 - M1 Design system + shell + navigation — COMPLETE (emulator validation confirmed)
-- M2 Backend runtime connection + auth foundation — IN PROGRESS
-- M3 Home + menu discovery — NOT STARTED
+- M2 Backend runtime connection + auth foundation — COMPLETE (CI + emulator OAuth validation confirmed)
+- M3 Home + menu discovery — IN PROGRESS
 - M4 Meal details + universal add-ons — NOT STARTED
 - M5 Cart + persisted configuration lines — NOT STARTED
 - M6 Build Meal engine — NOT STARTED
@@ -64,6 +64,12 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Existing `meals` endpoint returns HTTP 200.
 - Existing `user_roles` endpoint returns HTTP 200 and an empty anonymous result, consistent with RLS protection.
 - Email auth is enabled and the Google provider has been configured for the BTS Android OAuth callback.
-- Google sign-in still requires an emulator/device round-trip validation before M2 can be marked complete.
+- Google sign-in emulator round-trip validated with a persisted authenticated customer session.
 - Phone OTP remains provider-dependent and is not an M2 completion blocker.
 - Client-safe credentials remain local/CI configuration and are not committed.
+
+## M3 implementation started
+- Available, active, non-add-on meals load from the existing `meals` table through a repository.
+- Home discovery surfaces backend-driven popular meals with loading, retry and failure states.
+- Menu discovery provides backend-derived meal categories and food-type filters.
+- No schema, table, migration, RLS policy or production data change is part of M3.

@@ -13,6 +13,8 @@ import com.babatiffin.bts.core.ui.BtsAppShell
 import com.babatiffin.bts.feature.common.PlaceholderScreen
 import com.babatiffin.bts.feature.home.HomeScreen
 import com.babatiffin.bts.feature.menu.MenuScreen
+import com.babatiffin.bts.feature.menu.MealDiscoveryViewModel
+import com.babatiffin.bts.data.menu.SupabaseMealRepository
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import com.babatiffin.bts.data.auth.SupabaseAuthRepository
@@ -51,6 +53,13 @@ fun BtsNavGraph(
         ) as T
     })
     val authState by authViewModel.state.collectAsState()
+    val mealViewModel: MealDiscoveryViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = MealDiscoveryViewModel(
+            SupabaseProvider.client?.let(::SupabaseMealRepository),
+        ) as T
+    })
+    val mealState by mealViewModel.state.collectAsState()
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
@@ -89,10 +98,15 @@ fun BtsNavGraph(
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(BtsDestination.Home.route) {
-                HomeScreen(onOpenMenu = { navigate(BtsDestination.Menu.route) })
+                HomeScreen(state = mealState, onOpenMenu = { navigate(BtsDestination.Menu.route) }, onRetry = mealViewModel::refresh)
             }
             composable(BtsDestination.Menu.route) {
-                MenuScreen()
+                MenuScreen(
+                    state = mealState,
+                    onCategory = mealViewModel::selectCategory,
+                    onFoodType = mealViewModel::selectFoodType,
+                    onRetry = mealViewModel::refresh,
+                )
             }
             composable(BtsDestination.Plans.route) {
                 PlaceholderScreen("Plans", "Subscription plans will be connected to the existing BTS backend in the scheduled milestone.")
