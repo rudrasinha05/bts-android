@@ -15,8 +15,10 @@ private data class PushTokenUpsert(
 
 class PushTokenRepository(private val client: SupabaseClient) {
     suspend fun register(userId: String, token: String) {
-        client.from("push_device_tokens").upsert(
+        client.from("push_device_tokens").insert(
             PushTokenUpsert(userId = userId, token = token),
-        ) { onConflict = "token" }
+            upsert = true,
+            onConflict = "token",
+        )
     }
 }
