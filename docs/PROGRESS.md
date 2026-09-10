@@ -18,8 +18,8 @@ Last updated: 2026-09-09
 - M6 Build Meal engine — COMPLETE (CI + emulator validation confirmed)
 - M7 Subscription lifecycle — COMPLETE (CI + emulator validation confirmed)
 - M8 Orders + order state timeline — COMPLETE (CI + emulator validation confirmed)
-- M9 Checkout + payments + wallet — IN PROGRESS
-- M10 Profile + addresses + nutrition tracker + support — NOT STARTED
+- M9 Checkout + payments + wallet — COMPLETE (CI + emulator payment validation confirmed)
+- M10 Profile + addresses + nutrition tracker + support — IN PROGRESS
 - M11 Notifications + location + referrals — NOT STARTED
 - M12 Role-gated operations surfaces — NOT STARTED
 - M13 Hardening — NOT STARTED
@@ -118,3 +118,9 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Edge Function deployment and Android Razorpay callback wiring remain pending live validation.
 - Wallet checkout uses an authenticated server function with a compare-and-set balance debit, payment record and wallet ledger entry against the existing tables.
 - No schema, table, migration, RLS policy or production data change is part of M9.
+
+## M10 implementation started
+- Authenticated customers can edit existing profile fields and manage active/default delivery addresses.
+- Nutrition goals persist through `nutrition_profiles`; meal nutrition reads the existing `meal_nutrition` records.
+- Support tickets can be created and reviewed through the existing `support_tickets` table.
+- No schema, table, migration, RLS policy or production data change is part of M10.

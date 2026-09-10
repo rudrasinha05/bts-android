@@ -46,6 +46,11 @@ import com.babatiffin.bts.feature.orders.OrdersViewModel
 import com.babatiffin.bts.data.checkout.SupabaseCheckoutRepository
 import com.babatiffin.bts.feature.checkout.CheckoutScreen
 import com.babatiffin.bts.feature.checkout.CheckoutViewModel
+import com.babatiffin.bts.data.customer.SupabaseCustomerRepository
+import com.babatiffin.bts.feature.customer.CustomerViewModel
+import com.babatiffin.bts.feature.customer.NutritionScreen
+import com.babatiffin.bts.feature.customer.ProfileScreen
+import com.babatiffin.bts.feature.customer.SupportScreen
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -110,6 +115,14 @@ fun BtsNavGraph(
     })
     val checkoutState by checkoutViewModel.state.collectAsState()
     LaunchedEffect(authState.userId) { checkoutViewModel.load(authState.userId) }
+    val customerViewModel: CustomerViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = CustomerViewModel(
+            SupabaseProvider.client?.let(::SupabaseCustomerRepository),
+        ) as T
+    })
+    val customerState by customerViewModel.state.collectAsState()
+    LaunchedEffect(authState.userId) { customerViewModel.load(authState.userId) }
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
@@ -228,13 +241,13 @@ fun BtsNavGraph(
                 OrderDetailScreen(state = ordersState, mealNames = mealState.meals.associate { it.id to it.name })
             }
             composable(BtsDestination.Nutrition.route) {
-                PlaceholderScreen("Nutrition", "Nutrition tracking will use the existing meal and nutrition records.")
+                NutritionScreen(customerState, mealState.meals.associate { it.id to it.name }, customerViewModel::saveNutrition)
             }
             composable(BtsDestination.Profile.route) {
-                AuthScreen(state = authState, viewModel = authViewModel)
+                ProfileScreen(customerState, customerViewModel::saveProfile, customerViewModel::addAddress, customerViewModel::setDefault, customerViewModel::deleteAddress, authViewModel::signOut)
             }
             composable(BtsDestination.Support.route) {
-                PlaceholderScreen("Support", "Support tickets and customer help will be available here.")
+                SupportScreen(customerState, customerViewModel::createTicket)
             }
             composable(BtsDestination.Cart.route) {
                 CartScreen(
