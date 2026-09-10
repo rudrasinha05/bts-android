@@ -114,4 +114,6 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Checkout reads active coupons and the authenticated customer's wallet balance from the existing backend.
 - Coupon discounts and wallet/online payment choices update an explicit payable summary.
 - Payment execution stays locked until the existing server-side checkout contract is identified; no Razorpay secret or payment verification is placed in Android.
+- Version-controlled `create-payment-order` and `verify-payment` Edge Functions now implement authenticated server pricing, coupon checks, Razorpay order creation, signature verification and capture against existing tables.
+- Edge Function deployment and Android Razorpay callback wiring remain pending live validation.
 - No schema, table, migration, RLS policy or production data change is part of M9.
