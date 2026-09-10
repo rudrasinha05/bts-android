@@ -95,9 +95,11 @@ fun CheckoutScreen(
         )
 
         val activity = androidx.compose.ui.platform.LocalContext.current as Activity
-        Button(onClick = { onPay(activity) }, enabled = !state.loading && lines.size > 0 && state.paymentChoice == PaymentChoice.Online, modifier = Modifier.fillMaxWidth()) {
+        val walletReady = state.paymentChoice != PaymentChoice.Wallet || (state.wallet?.balance ?: 0.0) >= total
+        Button(onClick = { onPay(activity) }, enabled = !state.loading && lines.size > 0 && walletReady, modifier = Modifier.fillMaxWidth()) {
             Text("Pay ₹${total.toInt()}")
         }
+        if (state.paymentChoice == PaymentChoice.Wallet && !walletReady) Text("Insufficient wallet balance", color = MaterialTheme.colorScheme.error)
         Text(
             "Secure payment is created and verified by the BTS server. No Razorpay secret is stored in this app.",
             style = MaterialTheme.typography.bodySmall,

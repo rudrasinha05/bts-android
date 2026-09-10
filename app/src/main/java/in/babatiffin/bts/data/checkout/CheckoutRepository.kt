@@ -40,12 +40,14 @@ data class Coupon(
 @Serializable data class PaymentOrder(val orderId: String, val orderNumber: String, val razorpayOrderId: String, val keyId: String, val amount: Int, val currency: String)
 @Serializable data class PaymentVerification(val razorpayOrderId: String, val razorpayPaymentId: String, val razorpaySignature: String)
 @Serializable data class VerificationResult(val verified: Boolean, val orderId: String)
+@Serializable data class WalletPaymentResult(val verified: Boolean, val orderId: String, val balance: Double)
 
 interface CheckoutRepository {
     suspend fun wallet(userId: String): Wallet?
     suspend fun coupons(): List<Coupon>
     suspend fun createPaymentOrder(request: PaymentOrderRequest): PaymentOrder
     suspend fun verifyPayment(request: PaymentVerification): VerificationResult
+    suspend fun payWithWallet(request: PaymentOrderRequest): WalletPaymentResult
 }
 
 class SupabaseCheckoutRepository(private val client: SupabaseClient) : CheckoutRepository {
@@ -65,6 +67,7 @@ class SupabaseCheckoutRepository(private val client: SupabaseClient) : CheckoutR
 
     override suspend fun createPaymentOrder(request: PaymentOrderRequest): PaymentOrder = invoke("create-payment-order", json.encodeToString(request))
     override suspend fun verifyPayment(request: PaymentVerification): VerificationResult = invoke("verify-payment", json.encodeToString(request))
+    override suspend fun payWithWallet(request: PaymentOrderRequest): WalletPaymentResult = invoke("pay-with-wallet", json.encodeToString(request.copy(method = "WALLET")))
 
     private suspend inline fun <reified T> invoke(function: String, payload: String): T {
         val token = client.auth.currentSessionOrNull()?.accessToken ?: error("Authentication required")

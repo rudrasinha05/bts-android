@@ -81,7 +81,7 @@ class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel
     fun chooseMealType(value: String) { _state.value = _state.value.copy(mealType = value) }
 
     fun pay(activity: Activity, lines: List<CartLine>) {
-        if (repository == null || lines.isEmpty() || _state.value.paymentChoice != PaymentChoice.Online) return
+        if (repository == null || lines.isEmpty()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true, error = null)
             runCatching {
@@ -90,8 +90,14 @@ class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel
                     items += CheckoutItem(line.mealId, line.quantity)
                     for (addOn in line.addOns) items += CheckoutItem(addOn.id, addOn.quantity * line.quantity)
                 }
-                repository.createPaymentOrder(PaymentOrderRequest(items, _state.value.appliedCoupon?.code, _state.value.mealType))
+                val request = PaymentOrderRequest(items, _state.value.appliedCoupon?.code, _state.value.mealType)
+                if (_state.value.paymentChoice == PaymentChoice.Wallet) {
+                    val result = repository.payWithWallet(request)
+                    _state.value = _state.value.copy(loading = false, paymentComplete = result.verified, wallet = _state.value.wallet?.copy(balance = result.balance))
+                    null
+                } else repository.createPaymentOrder(request)
             }.onSuccess { order ->
+                if (order == null) return@onSuccess
                 _state.value = _state.value.copy(loading = false)
                 val options = JSONObject()
                     .put("name", "BTS Baba Tiffin Services")
