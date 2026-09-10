@@ -83,9 +83,9 @@ fun CheckoutScreen(
 
         Text("Payment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text("Meal time", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        for (value in listOf("breakfast", "lunch", "dinner")) {
-            PaymentOption(value.replaceFirstChar { it.uppercase() }, value, state.mealType, onMealType)
-        }
+        PaymentOption("Breakfast", "breakfast", state.mealType, onMealType)
+        PaymentOption("Lunch", "lunch", state.mealType, onMealType)
+        PaymentOption("Dinner", "dinner", state.mealType, onMealType)
         PaymentOption("Pay securely online", PaymentChoice.Online, state.paymentChoice, onPaymentChoice)
         PaymentOption(
             "BTS Wallet · ₹${state.wallet?.balance?.toInt() ?: 0}",
@@ -95,7 +95,7 @@ fun CheckoutScreen(
         )
 
         val activity = androidx.compose.ui.platform.LocalContext.current as Activity
-        Button(onClick = { onPay(activity) }, enabled = !state.loading && lines.isNotEmpty() && state.paymentChoice == PaymentChoice.Online, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = { onPay(activity) }, enabled = !state.loading && lines.size > 0 && state.paymentChoice == PaymentChoice.Online, modifier = Modifier.fillMaxWidth()) {
             Text("Pay ₹${total.toInt()}")
         }
         Text(
