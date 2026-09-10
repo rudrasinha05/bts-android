@@ -17,8 +17,8 @@ Last updated: 2026-09-09
 - M5 Cart + persisted configuration lines — COMPLETE (CI + emulator validation confirmed)
 - M6 Build Meal engine — COMPLETE (CI + emulator validation confirmed)
 - M7 Subscription lifecycle — COMPLETE (CI + emulator validation confirmed)
-- M8 Orders + order state timeline — IN PROGRESS
-- M9 Checkout + payments + wallet — NOT STARTED
+- M8 Orders + order state timeline — COMPLETE (CI + emulator validation confirmed)
+- M9 Checkout + payments + wallet — IN PROGRESS
 - M10 Profile + addresses + nutrition tracker + support — NOT STARTED
 - M11 Notifications + location + referrals — NOT STARTED
 - M12 Role-gated operations surfaces — NOT STARTED
@@ -108,3 +108,10 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - List and detail screens expose totals, item quantities, notes and chronological status history.
 - Empty accounts render an intentional no-orders state; order creation remains in M9 checkout.
 - No schema, table, migration, RLS policy or production data change is part of M8.
+
+## M9 implementation started
+- Cart now hands authenticated customers into a native checkout review screen.
+- Checkout reads active coupons and the authenticated customer's wallet balance from the existing backend.
+- Coupon discounts and wallet/online payment choices update an explicit payable summary.
+- Payment execution stays locked until the existing server-side checkout contract is identified; no Razorpay secret or payment verification is placed in Android.
+- No schema, table, migration, RLS policy or production data change is part of M9.

@@ -43,6 +43,9 @@ import com.babatiffin.bts.data.order.SupabaseOrderRepository
 import com.babatiffin.bts.feature.orders.OrderDetailScreen
 import com.babatiffin.bts.feature.orders.OrdersScreen
 import com.babatiffin.bts.feature.orders.OrdersViewModel
+import com.babatiffin.bts.data.checkout.SupabaseCheckoutRepository
+import com.babatiffin.bts.feature.checkout.CheckoutScreen
+import com.babatiffin.bts.feature.checkout.CheckoutViewModel
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -51,6 +54,7 @@ private val authRequiredRoutes = setOf(
     BtsDestination.Orders.route,
     BtsDestination.Profile.route,
     BtsDestination.Support.route,
+    BtsDestination.Checkout.route,
 )
 
 @Composable
@@ -98,6 +102,14 @@ fun BtsNavGraph(
     })
     val ordersState by ordersViewModel.state.collectAsState()
     LaunchedEffect(authState.userId) { ordersViewModel.load(authState.userId) }
+    val checkoutViewModel: CheckoutViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = CheckoutViewModel(
+            SupabaseProvider.client?.let(::SupabaseCheckoutRepository),
+        ) as T
+    })
+    val checkoutState by checkoutViewModel.state.collectAsState()
+    LaunchedEffect(authState.userId) { checkoutViewModel.load(authState.userId) }
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
@@ -221,6 +233,16 @@ fun BtsNavGraph(
                     onChangeQuantity = cartViewModel::changeQuantity,
                     onRemove = cartViewModel::remove,
                     onClear = cartViewModel::clear,
+                    onCheckout = { navigate(BtsDestination.Checkout.route) },
+                )
+            }
+            composable(BtsDestination.Checkout.route) {
+                CheckoutScreen(
+                    state = checkoutState,
+                    lines = cartLines,
+                    onCouponCode = checkoutViewModel::setCouponCode,
+                    onApplyCoupon = checkoutViewModel::applyCoupon,
+                    onPaymentChoice = checkoutViewModel::choosePayment,
                 )
             }
             composable(BtsDestination.Auth.route) {

@@ -24,6 +24,7 @@ fun CartScreen(
     onChangeQuantity: (CartLine, Int) -> Unit,
     onRemove: (String) -> Unit,
     onClear: () -> Unit,
+    onCheckout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -61,6 +62,7 @@ fun CartScreen(
                         modifier = Modifier.padding(vertical = 8.dp),
                     )
                     Text("Delivery charges, taxes and checkout are calculated in the payment milestone.")
+                    Button(onClick = onCheckout, modifier = Modifier.fillMaxWidth()) { Text("Continue to checkout") }
                 }
             }
         }
