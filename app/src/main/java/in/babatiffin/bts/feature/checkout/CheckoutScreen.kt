@@ -72,7 +72,7 @@ fun CheckoutScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        OutlinedButton(onClick = onApplyCoupon, enabled = state.couponCode.trim().isNotEmpty()) { Text("Apply") }
+        OutlinedButton(onClick = onApplyCoupon, enabled = state.couponCode != "") { Text("Apply") }
         if (coupon != null) {
             val description = if (coupon.description == null) "" else ": ${coupon.description}"
             Text("${coupon.code} applied$description")
