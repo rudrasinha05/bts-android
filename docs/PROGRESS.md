@@ -20,7 +20,7 @@ Last updated: 2026-09-09
 - M8 Orders + order state timeline — COMPLETE (CI + emulator validation confirmed)
 - M9 Checkout + payments + wallet — COMPLETE (CI + emulator payment validation confirmed)
 - M10 Profile + addresses + nutrition tracker + support — COMPLETE (CI + emulator validation confirmed)
-- M11 Notifications + location + referrals — IN PROGRESS
+- M11 Notifications + location + referrals — IN PROGRESS (FCM integration added; deployment validation pending)
 - M12 Role-gated operations surfaces — NOT STARTED
 - M13 Hardening — NOT STARTED
 - M14 Acceptance testing + APK/AAB — NOT STARTED
@@ -129,5 +129,5 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - The top-bar bell opens the existing RLS-scoped notification inbox and supports read state.
 - Referral code sharing and reward history use the existing referral tables.
 - Customers can attach device coordinates to an owned saved address after runtime location permission.
-- Closed-app FCM token persistence remains blocked because the frozen backend has no device-token table; no replacement table was invented.
-- No schema, table, migration or production data change is part of M11.
+- Added the required `push_device_tokens` migration with authenticated ownership RLS for closed-app FCM registration.
+- Added Firebase Messaging service and signed-in token registration. `google-services.json` remains local/untracked.

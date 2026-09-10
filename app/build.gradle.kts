@@ -7,6 +7,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use(::load)
@@ -78,6 +82,8 @@ dependencies {
     implementation("io.ktor:ktor-client-android:3.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("com.razorpay:checkout:1.6.41")
+    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
+    implementation("com.google.firebase:firebase-messaging")
     // Supabase Auth uses Custom Tabs; keep AndroidX Browser compatible with frozen AGP 8.6.
     implementation("androidx.browser:browser") {
         version { strictly("1.8.0") }

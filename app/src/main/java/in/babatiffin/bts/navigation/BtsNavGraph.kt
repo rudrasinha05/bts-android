@@ -53,6 +53,7 @@ import com.babatiffin.bts.feature.customer.ProfileScreen
 import com.babatiffin.bts.feature.customer.SupportScreen
 import com.babatiffin.bts.data.engagement.SupabaseEngagementRepository
 import com.babatiffin.bts.feature.engagement.EngagementViewModel
+import com.babatiffin.bts.core.notification.PushRegistration
 import com.babatiffin.bts.feature.engagement.NotificationsScreen
 import com.babatiffin.bts.feature.engagement.ReferralsScreen
 
@@ -135,6 +136,9 @@ fun BtsNavGraph(
     })
     val engagementState by engagementViewModel.state.collectAsState()
     LaunchedEffect(authState.userId) { engagementViewModel.load(authState.userId) }
+    LaunchedEffect(authState.userId) {
+        authState.userId?.let { PushRegistration.registerSignedInUser(context, it) }
+    }
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
