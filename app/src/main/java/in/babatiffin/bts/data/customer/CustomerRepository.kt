@@ -24,6 +24,8 @@ import kotlinx.serialization.Serializable
     val state: String = "Uttar Pradesh",
     val pincode: String,
     @SerialName("is_default") val isDefault: Boolean = false,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
 )
 
 @Serializable data class AddressWrite(
@@ -76,6 +78,7 @@ interface CustomerRepository {
     suspend fun addAddress(address: AddressWrite)
     suspend fun deleteAddress(id: String, userId: String)
     suspend fun setDefaultAddress(id: String, userId: String)
+    suspend fun updateLocation(id: String, userId: String, latitude: Double, longitude: Double)
     suspend fun nutritionProfile(userId: String): NutritionProfile?
     suspend fun saveNutrition(profile: NutritionProfile)
     suspend fun mealNutrition(): List<MealNutrition>
@@ -98,6 +101,9 @@ class SupabaseCustomerRepository(private val client: SupabaseClient) : CustomerR
     override suspend fun setDefaultAddress(id: String, userId: String) {
         client.from("addresses").update({ set("is_default", false) }) { filter { eq("user_id", userId) } }
         client.from("addresses").update({ set("is_default", true) }) { filter { eq("id", id); eq("user_id", userId) } }
+    }
+    override suspend fun updateLocation(id: String, userId: String, latitude: Double, longitude: Double) {
+        client.from("addresses").update({ set("latitude", latitude); set("longitude", longitude) }) { filter { eq("id", id); eq("user_id", userId) } }
     }
     override suspend fun nutritionProfile(userId: String) = client.from("nutrition_profiles").select { filter { eq("user_id", userId) } }.decodeList<NutritionProfile>().firstOrNull()
     override suspend fun saveNutrition(profile: NutritionProfile) {

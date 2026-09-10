@@ -51,6 +51,10 @@ import com.babatiffin.bts.feature.customer.CustomerViewModel
 import com.babatiffin.bts.feature.customer.NutritionScreen
 import com.babatiffin.bts.feature.customer.ProfileScreen
 import com.babatiffin.bts.feature.customer.SupportScreen
+import com.babatiffin.bts.data.engagement.SupabaseEngagementRepository
+import com.babatiffin.bts.feature.engagement.EngagementViewModel
+import com.babatiffin.bts.feature.engagement.NotificationsScreen
+import com.babatiffin.bts.feature.engagement.ReferralsScreen
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -60,6 +64,8 @@ private val authRequiredRoutes = setOf(
     BtsDestination.Profile.route,
     BtsDestination.Support.route,
     BtsDestination.Checkout.route,
+    BtsDestination.Notifications.route,
+    BtsDestination.Referrals.route,
 )
 
 @Composable
@@ -123,6 +129,12 @@ fun BtsNavGraph(
     })
     val customerState by customerViewModel.state.collectAsState()
     LaunchedEffect(authState.userId) { customerViewModel.load(authState.userId) }
+    val engagementViewModel: EngagementViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = EngagementViewModel(SupabaseProvider.client?.let(::SupabaseEngagementRepository)) as T
+    })
+    val engagementState by engagementViewModel.state.collectAsState()
+    LaunchedEffect(authState.userId) { engagementViewModel.load(authState.userId) }
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
@@ -244,7 +256,7 @@ fun BtsNavGraph(
                 NutritionScreen(customerState, mealState.meals.associate { it.id to it.name }, customerViewModel::saveNutrition)
             }
             composable(BtsDestination.Profile.route) {
-                ProfileScreen(customerState, customerViewModel::saveProfile, customerViewModel::addAddress, customerViewModel::setDefault, customerViewModel::deleteAddress, authViewModel::signOut)
+                ProfileScreen(customerState, customerViewModel::saveProfile, customerViewModel::addAddress, customerViewModel::setDefault, customerViewModel::deleteAddress, customerViewModel::updateLocation, authViewModel::signOut)
             }
             composable(BtsDestination.Support.route) {
                 SupportScreen(customerState, customerViewModel::createTicket)
@@ -272,6 +284,8 @@ fun BtsNavGraph(
             composable(BtsDestination.Auth.route) {
                 AuthScreen(state = authState, viewModel = authViewModel)
             }
+            composable(BtsDestination.Notifications.route) { NotificationsScreen(engagementState, engagementViewModel::read) }
+            composable(BtsDestination.Referrals.route) { ReferralsScreen(engagementState) }
         }
     }
 }

@@ -70,6 +70,7 @@ private val drawerItems = listOf(
     ShellItem(BtsDestination.Subscription.route, "Subscription", Icons.Default.ReceiptLong),
     ShellItem(BtsDestination.Nutrition.route, "Nutrition", Icons.Default.RestaurantMenu),
     ShellItem(BtsDestination.Support.route, "Support", Icons.Default.SupportAgent),
+    ShellItem(BtsDestination.Referrals.route, "Refer & earn", Icons.Default.AccountCircle),
 )
 
 @Composable
@@ -135,6 +136,7 @@ fun BtsAppShell(
                             onToggleTheme = onToggleTheme,
                             onOpenDrawer = { scope.launch { drawerState.open() } },
                             onOpenCart = { onNavigate(BtsDestination.Cart.route) },
+                            onOpenNotifications = { onNavigate(BtsDestination.Notifications.route) },
                             onOpenAccount = { onNavigate(if (isAuthenticated) BtsDestination.Profile.route else BtsDestination.Auth.route) },
                         )
                     },
@@ -150,6 +152,7 @@ fun BtsAppShell(
                         onToggleTheme = onToggleTheme,
                         onOpenDrawer = { scope.launch { drawerState.open() } },
                         onOpenCart = { onNavigate(BtsDestination.Cart.route) },
+                        onOpenNotifications = { onNavigate(BtsDestination.Notifications.route) },
                         onOpenAccount = { onNavigate(if (isAuthenticated) BtsDestination.Profile.route else BtsDestination.Auth.route) },
                     )
                 },
@@ -202,6 +205,7 @@ private fun BtsTopBar(
     onToggleTheme: () -> Unit,
     onOpenDrawer: () -> Unit,
     onOpenCart: () -> Unit,
+    onOpenNotifications: () -> Unit,
     onOpenAccount: () -> Unit,
 ) {
     Surface(shadowElevation = 2.dp) {
@@ -233,7 +237,7 @@ private fun BtsTopBar(
                     contentDescription = if (isDarkTheme) "Use light mode" else "Use dark mode",
                 )
             }
-            IconButton(onClick = { }) {
+            IconButton(onClick = onOpenNotifications) {
                 Icon(Icons.Default.Notifications, contentDescription = "Notifications")
             }
             IconButton(onClick = onOpenCart) {
@@ -259,5 +263,7 @@ private fun routeTitle(route: String?): String = when (route) {
     BtsDestination.Support.route -> "Support"
     BtsDestination.Cart.route -> "Cart"
     BtsDestination.Auth.route -> "Login"
+    BtsDestination.Notifications.route -> "Notifications"
+    BtsDestination.Referrals.route -> "Refer & earn"
     else -> "BTS"
 }

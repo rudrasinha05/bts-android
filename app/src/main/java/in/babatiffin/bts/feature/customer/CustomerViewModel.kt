@@ -46,6 +46,7 @@ class CustomerViewModel(private val repository: CustomerRepository?) : ViewModel
     }
     fun deleteAddress(address: Address) = mutate("Address removed.", true) { repository?.deleteAddress(address.id, it) }
     fun setDefault(address: Address) = mutate("Default address updated.", true) { repository?.setDefaultAddress(address.id, it) }
+    fun updateLocation(address: Address, latitude: Double, longitude: Double) = mutate("Address location updated.", true) { repository?.updateLocation(address.id, it, latitude, longitude) }
 
     fun saveNutrition(goal: String, calories: String, protein: String, carbs: String, fat: String, fiber: String) = mutate("Nutrition goals saved.", true) { userId ->
         repository?.saveNutrition(NutritionProfile(null, userId, goal.ifBlank { null }, calories.toIntOrNull(), protein.toIntOrNull(), carbs.toIntOrNull(), fat.toIntOrNull(), fiber.toIntOrNull()))

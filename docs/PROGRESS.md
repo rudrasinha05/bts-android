@@ -19,8 +19,8 @@ Last updated: 2026-09-09
 - M7 Subscription lifecycle — COMPLETE (CI + emulator validation confirmed)
 - M8 Orders + order state timeline — COMPLETE (CI + emulator validation confirmed)
 - M9 Checkout + payments + wallet — COMPLETE (CI + emulator payment validation confirmed)
-- M10 Profile + addresses + nutrition tracker + support — IN PROGRESS
-- M11 Notifications + location + referrals — NOT STARTED
+- M10 Profile + addresses + nutrition tracker + support — COMPLETE (CI + emulator validation confirmed)
+- M11 Notifications + location + referrals — IN PROGRESS
 - M12 Role-gated operations surfaces — NOT STARTED
 - M13 Hardening — NOT STARTED
 - M14 Acceptance testing + APK/AAB — NOT STARTED
@@ -124,3 +124,10 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Nutrition goals persist through `nutrition_profiles`; meal nutrition reads the existing `meal_nutrition` records.
 - Support tickets can be created and reviewed through the existing `support_tickets` table.
 - No schema, table, migration, RLS policy or production data change is part of M10.
+
+## M11 implementation started
+- The top-bar bell opens the existing RLS-scoped notification inbox and supports read state.
+- Referral code sharing and reward history use the existing referral tables.
+- Customers can attach device coordinates to an owned saved address after runtime location permission.
+- Closed-app FCM token persistence remains blocked because the frozen backend has no device-token table; no replacement table was invented.
+- No schema, table, migration or production data change is part of M11.
