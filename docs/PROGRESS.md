@@ -1,6 +1,6 @@
 # BTS Android Progress
 
-Last updated: 2026-09-09
+Last updated: 2026-09-10
 
 ## BDR status
 - Architecture: FROZEN
@@ -21,8 +21,8 @@ Last updated: 2026-09-09
 - M9 Checkout + payments + wallet — COMPLETE (CI + emulator payment validation confirmed)
 - M10 Profile + addresses + nutrition tracker + support — COMPLETE (CI + emulator validation confirmed)
 - M11 Notifications + location + referrals — COMPLETE
-- M12 Role-gated operations surfaces — IN PROGRESS
-- M13 Hardening — NOT STARTED
+- M12 Role-gated operations surfaces — COMPLETE (CI + role-gated emulator validation confirmed)
+- M13 Hardening — IN PROGRESS
 - M14 Acceptance testing + APK/AAB — NOT STARTED
 
 ## M1 delivered
