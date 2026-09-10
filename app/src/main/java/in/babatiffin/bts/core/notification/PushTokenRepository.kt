@@ -17,7 +17,6 @@ class PushTokenRepository(private val client: SupabaseClient) {
     suspend fun register(userId: String, token: String) {
         client.from("push_device_tokens").upsert(
             PushTokenUpsert(userId = userId, token = token),
-            onConflict = "token",
-        )
+        ) { onConflict = "token" }
     }
 }
