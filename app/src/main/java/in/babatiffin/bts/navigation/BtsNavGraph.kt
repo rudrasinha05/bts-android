@@ -39,6 +39,10 @@ import com.babatiffin.bts.data.subscription.SupabaseSubscriptionRepository
 import com.babatiffin.bts.feature.subscription.ManageSubscriptionScreen
 import com.babatiffin.bts.feature.subscription.PlansScreen
 import com.babatiffin.bts.feature.subscription.SubscriptionViewModel
+import com.babatiffin.bts.data.order.SupabaseOrderRepository
+import com.babatiffin.bts.feature.orders.OrderDetailScreen
+import com.babatiffin.bts.feature.orders.OrdersScreen
+import com.babatiffin.bts.feature.orders.OrdersViewModel
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -86,6 +90,14 @@ fun BtsNavGraph(
     })
     val subscriptionState by subscriptionViewModel.state.collectAsState()
     LaunchedEffect(authState.userId) { subscriptionViewModel.loadForUser(authState.userId) }
+    val ordersViewModel: OrdersViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = OrdersViewModel(
+            SupabaseProvider.client?.let(::SupabaseOrderRepository),
+        ) as T
+    })
+    val ordersState by ordersViewModel.state.collectAsState()
+    LaunchedEffect(authState.userId) { ordersViewModel.load(authState.userId) }
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
@@ -181,7 +193,18 @@ fun BtsNavGraph(
                 ManageSubscriptionScreen(state = subscriptionState, onStatus = subscriptionViewModel::setStatus)
             }
             composable(BtsDestination.Orders.route) {
-                PlaceholderScreen("Orders", "Order history and live status timeline will appear here.")
+                OrdersScreen(state = ordersState, onOpen = { id ->
+                    ordersViewModel.select(id)
+                    navController.navigate(BtsDestination.OrderDetail.createRoute(id))
+                })
+            }
+            composable(
+                route = BtsDestination.OrderDetail.route,
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType }),
+            ) { entry ->
+                val orderId = entry.arguments?.getString("orderId")
+                LaunchedEffect(orderId) { orderId?.let(ordersViewModel::select) }
+                OrderDetailScreen(state = ordersState, mealNames = mealState.meals.associate { it.id to it.name })
             }
             composable(BtsDestination.Nutrition.route) {
                 PlaceholderScreen("Nutrition", "Nutrition tracking will use the existing meal and nutrition records.")

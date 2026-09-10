@@ -16,8 +16,8 @@ Last updated: 2026-09-09
 - M4 Meal details + universal add-ons — COMPLETE (CI + emulator validation confirmed)
 - M5 Cart + persisted configuration lines — COMPLETE (CI + emulator validation confirmed)
 - M6 Build Meal engine — COMPLETE (CI + emulator validation confirmed)
-- M7 Subscription lifecycle — IN PROGRESS
-- M8 Orders + order state timeline — NOT STARTED
+- M7 Subscription lifecycle — COMPLETE (CI + emulator validation confirmed)
+- M8 Orders + order state timeline — IN PROGRESS
 - M9 Checkout + payments + wallet — NOT STARTED
 - M10 Profile + addresses + nutrition tracker + support — NOT STARTED
 - M11 Notifications + location + referrals — NOT STARTED
@@ -101,3 +101,10 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Existing subscriptions expose pause, resume and cancel actions with user-id scoped updates.
 - New paid subscription activation remains isolated to M9 checkout/payments.
 - No schema, table, migration, RLS policy or production data change is part of M7.
+
+## M8 implementation started
+- Authenticated customer orders load from the existing RLS-protected `orders` table.
+- Order details combine existing `order_items` and `order_status_history` records.
+- List and detail screens expose totals, item quantities, notes and chronological status history.
+- Empty accounts render an intentional no-orders state; order creation remains in M9 checkout.
+- No schema, table, migration, RLS policy or production data change is part of M8.

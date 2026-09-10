@@ -11,6 +11,9 @@ sealed class BtsDestination(val route: String) {
     data object BuildMeal : BtsDestination("build-meal")
     data object Subscription : BtsDestination("subscription")
     data object Orders : BtsDestination("orders")
+    data object OrderDetail : BtsDestination("orders/{orderId}") {
+        fun createRoute(orderId: String) = "orders/$orderId"
+    }
     data object Nutrition : BtsDestination("nutrition")
     data object Profile : BtsDestination("profile")
     data object Support : BtsDestination("support")
