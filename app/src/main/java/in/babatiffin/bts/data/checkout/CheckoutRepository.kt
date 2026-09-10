@@ -4,6 +4,18 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import com.babatiffin.bts.BuildConfig
+import io.github.jan.supabase.auth.auth
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.android.Android
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @Serializable
 data class Wallet(
@@ -23,12 +35,22 @@ data class Coupon(
     @SerialName("valid_to") val validTo: String? = null,
 )
 
+@Serializable data class CheckoutItem(val mealId: String, val quantity: Int)
+@Serializable data class PaymentOrderRequest(val items: List<CheckoutItem>, val couponCode: String? = null, val mealType: String, val method: String = "UPI")
+@Serializable data class PaymentOrder(val orderId: String, val orderNumber: String, val razorpayOrderId: String, val keyId: String, val amount: Int, val currency: String)
+@Serializable data class PaymentVerification(val razorpayOrderId: String, val razorpayPaymentId: String, val razorpaySignature: String)
+@Serializable data class VerificationResult(val verified: Boolean, val orderId: String)
+
 interface CheckoutRepository {
     suspend fun wallet(userId: String): Wallet?
     suspend fun coupons(): List<Coupon>
+    suspend fun createPaymentOrder(request: PaymentOrderRequest): PaymentOrder
+    suspend fun verifyPayment(request: PaymentVerification): VerificationResult
 }
 
 class SupabaseCheckoutRepository(private val client: SupabaseClient) : CheckoutRepository {
+    private val http = HttpClient(Android)
+    private val json = Json { ignoreUnknownKeys = true }
     override suspend fun wallet(userId: String): Wallet? = client.from("wallets")
         .select {
             filter { eq("user_id", userId) }
@@ -40,4 +62,18 @@ class SupabaseCheckoutRepository(private val client: SupabaseClient) : CheckoutR
     override suspend fun coupons(): List<Coupon> = client.from("coupons")
         .select { filter { eq("is_active", true) } }
         .decodeList()
+
+    override suspend fun createPaymentOrder(request: PaymentOrderRequest): PaymentOrder = invoke("create-payment-order", json.encodeToString(request))
+    override suspend fun verifyPayment(request: PaymentVerification): VerificationResult = invoke("verify-payment", json.encodeToString(request))
+
+    private suspend inline fun <reified T> invoke(function: String, payload: String): T {
+        val token = client.auth.currentSessionOrNull()?.accessToken ?: error("Authentication required")
+        val response = http.post("${BuildConfig.SUPABASE_URL}/functions/v1/$function") {
+            header("apikey", BuildConfig.SUPABASE_PUBLISHABLE_KEY)
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }
+        return json.decodeFromString(response.bodyAsText())
+    }
 }

@@ -77,6 +77,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.ktor:ktor-client-android:3.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("com.razorpay:checkout:1.6.41")
     // Supabase Auth uses Custom Tabs; keep AndroidX Browser compatible with frozen AGP 8.6.
     implementation("androidx.browser:browser") {
         version { strictly("1.8.0") }

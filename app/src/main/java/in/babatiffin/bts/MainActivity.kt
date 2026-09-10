@@ -14,12 +14,17 @@ import com.babatiffin.bts.core.design.BtsTheme
 import com.babatiffin.bts.navigation.BtsNavGraph
 import com.babatiffin.bts.data.backend.SupabaseProvider
 import io.github.jan.supabase.auth.handleDeeplinks
+import com.babatiffin.bts.core.payment.RazorpayCoordinator
+import com.razorpay.Checkout
+import com.razorpay.PaymentData
+import com.razorpay.PaymentResultWithDataListener
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         SupabaseProvider.client?.handleDeeplinks(intent)
+        Checkout.preload(applicationContext)
         setContent {
             val systemDark = isSystemInDarkTheme()
             var darkTheme by rememberSaveable { mutableStateOf(systemDark) }
@@ -38,4 +43,7 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         SupabaseProvider.client?.handleDeeplinks(intent)
     }
+
+    override fun onPaymentSuccess(paymentId: String?, data: PaymentData?) = RazorpayCoordinator.success(data)
+    override fun onPaymentError(code: Int, message: String?, data: PaymentData?) = RazorpayCoordinator.failure(message)
 }

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.babatiffin.bts.data.cart.CartLine
+import android.app.Activity
 
 @Composable
 fun CheckoutScreen(
@@ -29,6 +30,8 @@ fun CheckoutScreen(
     onCouponCode: (String) -> Unit,
     onApplyCoupon: () -> Unit,
     onPaymentChoice: (PaymentChoice) -> Unit,
+    onMealType: (String) -> Unit,
+    onPay: (Activity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var subtotal = 0.0
@@ -79,6 +82,10 @@ fun CheckoutScreen(
         }
 
         Text("Payment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("Meal time", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        for (value in listOf("breakfast", "lunch", "dinner")) {
+            PaymentOption(value.replaceFirstChar { it.uppercase() }, value, state.mealType, onMealType)
+        }
         PaymentOption("Pay securely online", PaymentChoice.Online, state.paymentChoice, onPaymentChoice)
         PaymentOption(
             "BTS Wallet · ₹${state.wallet?.balance?.toInt() ?: 0}",
@@ -87,11 +94,12 @@ fun CheckoutScreen(
             onPaymentChoice,
         )
 
-        Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
+        val activity = androidx.compose.ui.platform.LocalContext.current as Activity
+        Button(onClick = { onPay(activity) }, enabled = !state.loading && lines.isNotEmpty() && state.paymentChoice == PaymentChoice.Online, modifier = Modifier.fillMaxWidth()) {
             Text("Pay ₹${total.toInt()}")
         }
         Text(
-            "Payment remains locked until the existing BTS server checkout endpoint is connected. No Razorpay secret is stored in this app.",
+            "Secure payment is created and verified by the BTS server. No Razorpay secret is stored in this app.",
             style = MaterialTheme.typography.bodySmall,
         )
     }
@@ -99,6 +107,14 @@ fun CheckoutScreen(
 
 @Composable
 private fun PaymentOption(label: String, value: PaymentChoice, selected: PaymentChoice, onSelect: (PaymentChoice) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        RadioButton(selected = value == selected, onClick = { onSelect(value) })
+        Text(label)
+    }
+}
+
+@Composable
+private fun PaymentOption(label: String, value: String, selected: String, onSelect: (String) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(selected = value == selected, onClick = { onSelect(value) })
         Text(label)

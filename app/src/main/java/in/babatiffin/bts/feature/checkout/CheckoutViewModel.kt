@@ -9,6 +9,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.app.Activity
+import com.babatiffin.bts.core.payment.RazorpayCoordinator
+import com.babatiffin.bts.core.payment.RazorpayResult
+import com.babatiffin.bts.data.cart.CartLine
+import com.babatiffin.bts.data.checkout.CheckoutItem
+import com.babatiffin.bts.data.checkout.PaymentOrderRequest
+import com.babatiffin.bts.data.checkout.PaymentVerification
+import com.razorpay.Checkout
+import org.json.JSONObject
 
 enum class PaymentChoice { Online, Wallet }
 
@@ -20,12 +29,25 @@ data class CheckoutState(
     val couponCode: String = "",
     val appliedCoupon: Coupon? = null,
     val paymentChoice: PaymentChoice = PaymentChoice.Online,
+    val mealType: String = "lunch",
+    val paymentComplete: Boolean = false,
     val error: String? = null,
 )
 
 class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel() {
     private val _state = MutableStateFlow(CheckoutState())
     val state: StateFlow<CheckoutState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            RazorpayCoordinator.results.collect { result ->
+                when (result) {
+                    is RazorpayResult.Failure -> _state.value = _state.value.copy(loading = false, error = result.message)
+                    is RazorpayResult.Success -> verify(result)
+                }
+            }
+        }
+    }
 
     fun load(userId: String?) {
         if (userId == null || (userId == _state.value.userId && _state.value.coupons.isNotEmpty())) return
@@ -55,6 +77,42 @@ class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel
     fun choosePayment(choice: PaymentChoice) {
         _state.value = _state.value.copy(paymentChoice = choice, error = null)
     }
+
+    fun chooseMealType(value: String) { _state.value = _state.value.copy(mealType = value) }
+
+    fun pay(activity: Activity, lines: List<CartLine>) {
+        if (repository == null || lines.isEmpty() || _state.value.paymentChoice != PaymentChoice.Online) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(loading = true, error = null)
+            runCatching {
+                val items = mutableListOf<CheckoutItem>()
+                for (line in lines) {
+                    items += CheckoutItem(line.mealId, line.quantity)
+                    for (addOn in line.addOns) items += CheckoutItem(addOn.id, addOn.quantity * line.quantity)
+                }
+                repository.createPaymentOrder(PaymentOrderRequest(items, _state.value.appliedCoupon?.code, _state.value.mealType))
+            }.onSuccess { order ->
+                _state.value = _state.value.copy(loading = false)
+                val options = JSONObject()
+                    .put("name", "BTS Baba Tiffin Services")
+                    .put("description", "Order ${order.orderNumber}")
+                    .put("order_id", order.razorpayOrderId)
+                    .put("currency", order.currency)
+                    .put("amount", order.amount)
+                    .put("theme", JSONObject().put("color", "#E97800"))
+                Checkout().apply { setKeyID(order.keyId) }.open(activity, options)
+            }.onFailure { _state.value = _state.value.copy(loading = false, error = "Payment could not be started. Please retry.") }
+        }
+    }
+
+    private suspend fun verify(result: RazorpayResult.Success) {
+        _state.value = _state.value.copy(loading = true, error = null)
+        runCatching { repository?.verifyPayment(PaymentVerification(result.orderId, result.paymentId, result.signature)) }
+            .onSuccess { _state.value = _state.value.copy(loading = false, paymentComplete = it?.verified == true) }
+            .onFailure { _state.value = _state.value.copy(loading = false, error = "Payment received but verification is pending. Do not pay again; check Orders.") }
+    }
+
+    fun consumeCompletion() { _state.value = _state.value.copy(paymentComplete = false) }
 
     fun discount(subtotal: Double): Double {
         val coupon = _state.value.appliedCoupon ?: return 0.0

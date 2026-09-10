@@ -128,6 +128,15 @@ fun BtsNavGraph(
         }
     }
 
+    LaunchedEffect(checkoutState.paymentComplete) {
+        if (checkoutState.paymentComplete) {
+            cartViewModel.clear()
+            ordersViewModel.load(authState.userId)
+            checkoutViewModel.consumeCompletion()
+            navigate(BtsDestination.Orders.route)
+        }
+    }
+
     LaunchedEffect(authState.authenticated) {
         if (authState.authenticated) pendingRoute?.let { destination ->
             pendingRoute = null
@@ -243,6 +252,8 @@ fun BtsNavGraph(
                     onCouponCode = checkoutViewModel::setCouponCode,
                     onApplyCoupon = checkoutViewModel::applyCoupon,
                     onPaymentChoice = checkoutViewModel::choosePayment,
+                    onMealType = checkoutViewModel::chooseMealType,
+                    onPay = { activity -> checkoutViewModel.pay(activity, cartLines) },
                 )
             }
             composable(BtsDestination.Auth.route) {
