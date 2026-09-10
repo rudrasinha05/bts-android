@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.babatiffin.bts.data.cart.CartLine
-import kotlin.math.roundToInt
 
 @Composable
 fun CheckoutScreen(
@@ -32,10 +31,14 @@ fun CheckoutScreen(
     onPaymentChoice: (PaymentChoice) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val subtotal = lines.sumOf(CartLine::lineTotal)
-    val discount = state.appliedCoupon?.let {
-        maxOf(it.discountAmount ?: 0.0, subtotal * (it.discountPercent ?: 0.0) / 100.0).coerceIn(0.0, subtotal)
-    } ?: 0.0
+    var subtotal = 0.0
+    for (line in lines) subtotal += line.lineTotal
+    val coupon = state.appliedCoupon
+    val amountDiscount = coupon?.discountAmount ?: 0.0
+    val percentDiscount = subtotal * (coupon?.discountPercent ?: 0.0) / 100.0
+    var discount = if (amountDiscount > percentDiscount) amountDiscount else percentDiscount
+    if (discount < 0.0) discount = 0.0
+    if (discount > subtotal) discount = subtotal
     val total = subtotal - discount
 
     Column(
@@ -44,15 +47,15 @@ fun CheckoutScreen(
     ) {
         Text("Checkout", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
         if (state.loading) CircularProgressIndicator()
-        state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        if (state.error != null) Text(state.error, color = MaterialTheme.colorScheme.error)
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Order summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                lines.forEach { line ->
+                for (line in lines) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("${line.mealName} × ${line.quantity}")
-                        Text("₹${line.lineTotal.roundToInt()}")
+                        Text("₹${line.lineTotal.toInt()}")
                     }
                 }
                 SummaryRow("Subtotal", subtotal)
@@ -62,29 +65,30 @@ fun CheckoutScreen(
         }
 
         Text("Coupon", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = state.couponCode,
-                onValueChange = onCouponCode,
-                label = { Text("Coupon code") },
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-            )
-            OutlinedButton(onClick = onApplyCoupon, enabled = state.couponCode.isNotBlank()) { Text("Apply") }
+        OutlinedTextField(
+            value = state.couponCode,
+            onValueChange = onCouponCode,
+            label = { Text("Coupon code") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedButton(onClick = onApplyCoupon, enabled = state.couponCode.trim().isNotEmpty()) { Text("Apply") }
+        if (coupon != null) {
+            val description = if (coupon.description == null) "" else ": ${coupon.description}"
+            Text("${coupon.code} applied$description")
         }
-        state.appliedCoupon?.let { Text("${it.code} applied${it.description?.let { text -> ": $text" }.orEmpty()}") }
 
         Text("Payment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         PaymentOption("Pay securely online", PaymentChoice.Online, state.paymentChoice, onPaymentChoice)
         PaymentOption(
-            "BTS Wallet · ₹${state.wallet?.balance?.roundToInt() ?: 0}",
+            "BTS Wallet · ₹${state.wallet?.balance?.toInt() ?: 0}",
             PaymentChoice.Wallet,
             state.paymentChoice,
             onPaymentChoice,
         )
 
         Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
-            Text("Pay ₹${total.roundToInt()}")
+            Text("Pay ₹${total.toInt()}")
         }
         Text(
             "Payment remains locked until the existing BTS server checkout endpoint is connected. No Razorpay secret is stored in this app.",
@@ -105,6 +109,6 @@ private fun PaymentOption(label: String, value: PaymentChoice, selected: Payment
 private fun SummaryRow(label: String, value: Double, bold: Boolean = false) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
-        Text("₹${value.roundToInt()}", fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
+        Text("₹${value.toInt()}", fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
     }
 }
