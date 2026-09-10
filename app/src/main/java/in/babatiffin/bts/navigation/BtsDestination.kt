@@ -21,5 +21,9 @@ sealed class BtsDestination(val route: String) {
     data object Checkout : BtsDestination("checkout")
     data object Notifications : BtsDestination("notifications")
     data object Referrals : BtsDestination("referrals")
+    data object Kitchen : BtsDestination("operations/kitchen")
+    data object Packing : BtsDestination("operations/packing")
+    data object Inventory : BtsDestination("operations/inventory")
+    data object Delivery : BtsDestination("operations/delivery")
     data object Auth : BtsDestination("auth")
 }

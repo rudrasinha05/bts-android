@@ -20,8 +20,8 @@ Last updated: 2026-09-09
 - M8 Orders + order state timeline — COMPLETE (CI + emulator validation confirmed)
 - M9 Checkout + payments + wallet — COMPLETE (CI + emulator payment validation confirmed)
 - M10 Profile + addresses + nutrition tracker + support — COMPLETE (CI + emulator validation confirmed)
-- M11 Notifications + location + referrals — IN PROGRESS (FCM integration added; deployment validation pending)
-- M12 Role-gated operations surfaces — NOT STARTED
+- M11 Notifications + location + referrals — COMPLETE
+- M12 Role-gated operations surfaces — IN PROGRESS
 - M13 Hardening — NOT STARTED
 - M14 Acceptance testing + APK/AAB — NOT STARTED
 
@@ -131,3 +131,10 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Customers can attach device coordinates to an owned saved address after runtime location permission.
 - Added the required `push_device_tokens` migration with authenticated ownership RLS for closed-app FCM registration.
 - Added Firebase Messaging service and signed-in token registration. `google-services.json` remains local/untracked.
+
+## M12 implementation started
+- Drawer operations routes are visible only to matching kitchen, delivery or admin roles.
+- Kitchen orders and packing batches expose controlled forward-only status actions.
+- Inventory combines active items with current stock and highlights reorder-level shortages.
+- Delivery assignments expose pending, out-for-delivery and delivered transitions.
+- Supabase RLS remains the server-side authorization boundary in addition to UI route guards.

@@ -56,6 +56,12 @@ import com.babatiffin.bts.feature.engagement.EngagementViewModel
 import com.babatiffin.bts.core.notification.PushRegistration
 import com.babatiffin.bts.feature.engagement.NotificationsScreen
 import com.babatiffin.bts.feature.engagement.ReferralsScreen
+import com.babatiffin.bts.data.operations.SupabaseOperationsRepository
+import com.babatiffin.bts.feature.operations.DeliveryScreen
+import com.babatiffin.bts.feature.operations.InventoryScreen
+import com.babatiffin.bts.feature.operations.KitchenScreen
+import com.babatiffin.bts.feature.operations.OperationsViewModel
+import com.babatiffin.bts.feature.operations.PackingScreen
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -67,6 +73,10 @@ private val authRequiredRoutes = setOf(
     BtsDestination.Checkout.route,
     BtsDestination.Notifications.route,
     BtsDestination.Referrals.route,
+    BtsDestination.Kitchen.route,
+    BtsDestination.Packing.route,
+    BtsDestination.Inventory.route,
+    BtsDestination.Delivery.route,
 )
 
 @Composable
@@ -139,6 +149,9 @@ fun BtsNavGraph(
     LaunchedEffect(authState.userId) {
         authState.userId?.let { PushRegistration.registerSignedInUser(context, it) }
     }
+    val operationsViewModel:OperationsViewModel=viewModel(factory=object:ViewModelProvider.Factory{@Suppress("UNCHECKED_CAST") override fun<T:ViewModel>create(modelClass:Class<T>):T=OperationsViewModel(SupabaseProvider.client?.let(::SupabaseOperationsRepository)) as T})
+    val operationsState by operationsViewModel.state.collectAsState()
+    LaunchedEffect(authState.roles){operationsViewModel.load(authState.roles)}
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun navigate(route: String) {
@@ -179,6 +192,7 @@ fun BtsNavGraph(
         onToggleTheme = onToggleTheme,
         onNavigate = ::navigate,
         isAuthenticated = authState.authenticated,
+        roles = authState.roles,
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -290,6 +304,10 @@ fun BtsNavGraph(
             }
             composable(BtsDestination.Notifications.route) { NotificationsScreen(engagementState, engagementViewModel::read) }
             composable(BtsDestination.Referrals.route) { ReferralsScreen(engagementState) }
+            composable(BtsDestination.Kitchen.route) { if(authState.roles.any{it in setOf("admin","kitchen_manager","kitchen_staff")})KitchenScreen(operationsState,operationsViewModel::kitchen)else PlaceholderScreen("Restricted","Kitchen access requires an operations role.") }
+            composable(BtsDestination.Packing.route) { if(authState.roles.any{it in setOf("admin","kitchen_manager","kitchen_staff")})PackingScreen(operationsState,operationsViewModel::packing)else PlaceholderScreen("Restricted","Packing access requires an operations role.") }
+            composable(BtsDestination.Inventory.route) { if(authState.roles.any{it in setOf("admin","kitchen_manager","kitchen_staff")})InventoryScreen(operationsState)else PlaceholderScreen("Restricted","Inventory access requires an operations role.") }
+            composable(BtsDestination.Delivery.route) { if(authState.roles.any{it in setOf("admin","delivery_manager","delivery_agent")})DeliveryScreen(operationsState,operationsViewModel::delivery)else PlaceholderScreen("Restricted","Delivery access requires an operations role.") }
         }
     }
 }

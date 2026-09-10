@@ -73,6 +73,9 @@ private val drawerItems = listOf(
     ShellItem(BtsDestination.Referrals.route, "Refer & earn", Icons.Default.AccountCircle),
 )
 
+private val kitchenItems = listOf(ShellItem(BtsDestination.Kitchen.route,"Kitchen",Icons.Default.Dashboard),ShellItem(BtsDestination.Packing.route,"Packing",Icons.Default.Dashboard),ShellItem(BtsDestination.Inventory.route,"Inventory",Icons.Default.Dashboard))
+private val deliveryItems = listOf(ShellItem(BtsDestination.Delivery.route,"Delivery",Icons.Default.Dashboard))
+
 @Composable
 fun BtsAppShell(
     currentRoute: String?,
@@ -80,6 +83,7 @@ fun BtsAppShell(
     onToggleTheme: () -> Unit,
     onNavigate: (String) -> Unit,
     isAuthenticated: Boolean,
+    roles: Set<String>,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -105,7 +109,8 @@ fun BtsAppShell(
                     Spacer(Modifier.height(BtsSpacing.Lg))
                     Divider()
                     Spacer(Modifier.height(BtsSpacing.Sm))
-                    drawerItems.forEach { item ->
+                    val operations=buildList{if(roles.any{it in setOf("admin","kitchen_manager","kitchen_staff")})addAll(kitchenItems);if(roles.any{it in setOf("admin","delivery_manager","delivery_agent")})addAll(deliveryItems)}
+                    (drawerItems+operations).forEach { item ->
                         NavigationDrawerItem(
                             label = { Text(item.label) },
                             selected = currentRoute == item.route,
@@ -261,6 +266,10 @@ private fun routeTitle(route: String?): String = when (route) {
     BtsDestination.Nutrition.route -> "Nutrition"
     BtsDestination.Profile.route -> "Profile"
     BtsDestination.Support.route -> "Support"
+    BtsDestination.Kitchen.route -> "Kitchen"
+    BtsDestination.Packing.route -> "Packing"
+    BtsDestination.Inventory.route -> "Inventory"
+    BtsDestination.Delivery.route -> "Delivery"
     BtsDestination.Cart.route -> "Cart"
     BtsDestination.Auth.route -> "Login"
     BtsDestination.Notifications.route -> "Notifications"
