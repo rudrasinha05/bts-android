@@ -62,6 +62,8 @@ import com.babatiffin.bts.feature.operations.InventoryScreen
 import com.babatiffin.bts.feature.operations.KitchenScreen
 import com.babatiffin.bts.feature.operations.OperationsViewModel
 import com.babatiffin.bts.feature.operations.PackingScreen
+import com.babatiffin.bts.core.security.canAccessDeliveryOperations
+import com.babatiffin.bts.core.security.canAccessKitchenOperations
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -304,10 +306,10 @@ fun BtsNavGraph(
             }
             composable(BtsDestination.Notifications.route) { NotificationsScreen(engagementState, engagementViewModel::read) }
             composable(BtsDestination.Referrals.route) { ReferralsScreen(engagementState) }
-            composable(BtsDestination.Kitchen.route) { if(authState.roles.any{it in setOf("admin","kitchen_manager","kitchen_staff")})KitchenScreen(operationsState,operationsViewModel::kitchen)else PlaceholderScreen("Restricted","Kitchen access requires an operations role.") }
-            composable(BtsDestination.Packing.route) { if(authState.roles.any{it in setOf("admin","kitchen_manager","kitchen_staff")})PackingScreen(operationsState,operationsViewModel::packing)else PlaceholderScreen("Restricted","Packing access requires an operations role.") }
-            composable(BtsDestination.Inventory.route) { if(authState.roles.any{it in setOf("admin","kitchen_manager","kitchen_staff")})InventoryScreen(operationsState)else PlaceholderScreen("Restricted","Inventory access requires an operations role.") }
-            composable(BtsDestination.Delivery.route) { if(authState.roles.any{it in setOf("admin","delivery_manager","delivery_agent")})DeliveryScreen(operationsState,operationsViewModel::delivery)else PlaceholderScreen("Restricted","Delivery access requires an operations role.") }
+            composable(BtsDestination.Kitchen.route) { if(authState.roles.canAccessKitchenOperations())KitchenScreen(operationsState,operationsViewModel::kitchen)else PlaceholderScreen("Restricted","Kitchen access requires an operations role.") }
+            composable(BtsDestination.Packing.route) { if(authState.roles.canAccessKitchenOperations())PackingScreen(operationsState,operationsViewModel::packing)else PlaceholderScreen("Restricted","Packing access requires an operations role.") }
+            composable(BtsDestination.Inventory.route) { if(authState.roles.canAccessKitchenOperations())InventoryScreen(operationsState)else PlaceholderScreen("Restricted","Inventory access requires an operations role.") }
+            composable(BtsDestination.Delivery.route) { if(authState.roles.canAccessDeliveryOperations())DeliveryScreen(operationsState,operationsViewModel::delivery)else PlaceholderScreen("Restricted","Delivery access requires an operations role.") }
         }
     }
 }

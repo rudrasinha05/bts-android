@@ -49,6 +49,8 @@ import com.babatiffin.bts.core.design.BtsSize
 import com.babatiffin.bts.core.design.BtsSpacing
 import com.babatiffin.bts.navigation.BtsDestination
 import kotlinx.coroutines.launch
+import com.babatiffin.bts.core.security.canAccessDeliveryOperations
+import com.babatiffin.bts.core.security.canAccessKitchenOperations
 
 private data class ShellItem(
     val route: String,
@@ -109,7 +111,7 @@ fun BtsAppShell(
                     Spacer(Modifier.height(BtsSpacing.Lg))
                     Divider()
                     Spacer(Modifier.height(BtsSpacing.Sm))
-                    val operations=buildList{if(roles.any{it in setOf("admin","kitchen_manager","kitchen_staff")})addAll(kitchenItems);if(roles.any{it in setOf("admin","delivery_manager","delivery_agent")})addAll(deliveryItems)}
+                    val operations=buildList{if(roles.canAccessKitchenOperations())addAll(kitchenItems);if(roles.canAccessDeliveryOperations())addAll(deliveryItems)}
                     (drawerItems+operations).forEach { item ->
                         NavigationDrawerItem(
                             label = { Text(item.label) },

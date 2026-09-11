@@ -138,3 +138,8 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Inventory combines active items with current stock and highlights reorder-level shortages.
 - Delivery assignments expose pending, out-for-delivery and delivered transitions.
 - Supabase RLS remains the server-side authorization boundary in addition to UI route guards.
+
+## M13 hardening started
+- Centralized operations-role predicates and added unit coverage for customer, staff and admin boundaries.
+- Disabled Android backup and cleartext network traffic for production data protection.
+- Added Android lint as a required CI gate alongside compilation and unit tests.

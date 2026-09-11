@@ -48,18 +48,18 @@ class AuthViewModel(private val repository: AuthRepository?, configured: Boolean
         }
     }
 
-    fun signIn(email: String, password: String) = run { repository!!.signIn(email, password) }
-    fun signUp(email: String, password: String) = run { repository!!.signUp(email, password) }
-    fun sendOtp(phone: String) = run(success = { it.copy(otpSent = true, message = "OTP sent.") }) { repository!!.sendPhoneOtp(phone) }
-    fun verifyOtp(phone: String, otp: String) = run { repository!!.verifyPhoneOtp(phone, otp) }
-    fun google() = run { repository!!.signInWithGoogle() }
-    fun signOut() = run { repository!!.signOut() }
+    fun signIn(email: String, password: String) = execute { this.signIn(email, password) }
+    fun signUp(email: String, password: String) = execute { this.signUp(email, password) }
+    fun sendOtp(phone: String) = execute(success = { it.copy(otpSent = true, message = "OTP sent.") }) { this.sendPhoneOtp(phone) }
+    fun verifyOtp(phone: String, otp: String) = execute { this.verifyPhoneOtp(phone, otp) }
+    fun google() = execute { this.signInWithGoogle() }
+    fun signOut() = execute { this.signOut() }
 
-    private fun run(success: (AuthUiState) -> AuthUiState = { it.copy(message = null) }, action: suspend () -> Unit) {
-        if (repository == null) return
+    private fun execute(success: (AuthUiState) -> AuthUiState = { it.copy(message = null) }, action: suspend AuthRepository.() -> Unit) {
+        val repo = repository ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true, message = null)
-            runCatching { action() }
+            runCatching { repo.action() }
                 .onSuccess { _state.value = success(_state.value).copy(loading = false) }
                 .onFailure { _state.value = _state.value.copy(loading = false, message = friendlyError(it)) }
         }
