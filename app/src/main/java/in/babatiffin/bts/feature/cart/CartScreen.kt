@@ -44,7 +44,7 @@ fun CartScreen(
                                 Text(line.mealName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                                 Text("₹${line.lineTotal.toInt()}", fontWeight = FontWeight.SemiBold)
                             }
-                            line.addOns.forEach { Text("+ ${it.name} × ${it.quantity}", style = MaterialTheme.typography.bodySmall) }
+                            for (addOn in line.addOns) Text("+ ${addOn.name} × ${addOn.quantity}", style = MaterialTheme.typography.bodySmall)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 OutlinedButton(onClick = { onChangeQuantity(line, -1) }) { Text("−") }
                                 Text(line.quantity.toString(), modifier = Modifier.padding(top = 12.dp))

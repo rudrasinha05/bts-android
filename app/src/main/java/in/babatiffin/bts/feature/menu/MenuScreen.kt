@@ -32,12 +32,12 @@ fun MenuScreen(
         Text("Our menu", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 16.dp))
         Text("Choose a category and discover today's available meals.", modifier = Modifier.padding(bottom = 8.dp))
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            state.categories.forEach { value ->
+            for (value in state.categories) {
                 FilterChip(selected = state.category == value, onClick = { onCategory(value) }, label = { Text(value.replaceFirstChar(Char::uppercase)) })
             }
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("all", "veg", "egg", "chicken", "fish", "special").forEach { value ->
+            for (value in listOf("all", "veg", "egg", "chicken", "fish", "special")) {
                 FilterChip(selected = state.foodType == value, onClick = { onFoodType(value) }, label = { Text(value.replaceFirstChar(Char::uppercase)) })
             }
         }

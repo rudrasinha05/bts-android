@@ -112,7 +112,7 @@ fun BuildMealScreen(
 private fun ChoiceList(title: String, values: List<String>, selected: String, onSelect: (String) -> Unit) {
     Text(title, style = MaterialTheme.typography.titleLarge)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        values.forEach { value ->
+        for (value in values) {
             FilterChip(
                 selected = selected == value,
                 onClick = { onSelect(value) },

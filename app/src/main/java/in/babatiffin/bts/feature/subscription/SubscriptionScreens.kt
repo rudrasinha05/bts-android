@@ -31,7 +31,7 @@ fun PlansScreen(state: SubscriptionState, onManage: () -> Unit, modifier: Modifi
                     Text(plan.name + if (plan.isPopular) " • Popular" else "", style = MaterialTheme.typography.titleLarge)
                     Text(plan.description)
                     Text("${plan.mealsPerCycle} meals • ${plan.mealSchedule.replace('_', ' ')} • ${plan.foodType}")
-                    plan.highlights.forEach { Text("• $it") }
+                    for (highlight in plan.highlights) Text("• $highlight")
                     Text("₹${plan.price.toInt()} / ${plan.billingCycle}", fontWeight = FontWeight.Bold)
                 }
             }

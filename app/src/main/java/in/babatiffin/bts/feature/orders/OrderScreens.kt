@@ -63,7 +63,7 @@ fun OrderDetailScreen(state: OrdersState, mealNames: Map<String, String>, modifi
             item {
                 Text("Status timeline", style = MaterialTheme.typography.titleLarge)
                 if (details.timeline.isEmpty()) Text("● ${details.order.status.title()} — current status")
-                else details.timeline.forEach { event ->
+                else for (event in details.timeline) {
                     Text("● ${event.toStatus.title()} — ${event.createdAt.displayDate()}", modifier = Modifier.padding(vertical = 4.dp))
                 }
             }
