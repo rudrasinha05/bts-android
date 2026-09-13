@@ -46,9 +46,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (!state.loading && state.meals.isNotEmpty()) {
-            item { PromotionSlideshow(promotionalMeals(state.meals)) }
-        }
+        item { PromotionSlideshow(promotionalMeals(state.meals)) }
         item {
             Text(
                 text = "Ghar jaisa khana, every day",
@@ -119,12 +117,20 @@ private fun PromotionSlideshow(promotions: List<Meal>) {
 }
 
 private fun promotionalMeals(meals: List<Meal>): List<Meal> {
+    if (meals.isEmpty()) return fallbackPromotions
     val keywords = listOf("biryani", "paneer", "chicken", "breakfast", "fish")
     val selected = keywords.mapNotNull { keyword ->
         meals.firstOrNull { it.name.contains(keyword, ignoreCase = true) || it.category.equals(keyword, ignoreCase = true) }
     }.distinctBy(Meal::id)
     return (selected + meals).distinctBy(Meal::id).take(6)
 }
+
+private val fallbackPromotions = listOf(
+    Meal("promo-biryani", "Chicken Biryani", "Slow-cooked biryani with fragrant rice and homestyle spices.", "special", "chicken", "regular", 0.0, emptyList(), emptyList(), null),
+    Meal("promo-paneer", "Shahi Paneer", "Creamy paneer favourite for a comforting meal.", "dinner", "veg", "regular", 0.0, emptyList(), emptyList(), null),
+    Meal("promo-breakfast", "Idli Sambar", "A light and wholesome start to your day.", "breakfast", "veg", "regular", 0.0, emptyList(), emptyList(), null),
+    Meal("promo-fish", "Fish Curry", "Fresh fish cooked in a rich homestyle curry.", "dinner", "fish", "regular", 0.0, emptyList(), emptyList(), null),
+)
 
 private fun promotionTitle(meal: Meal): String = when {
     meal.name.contains("biryani", ignoreCase = true) -> "Biryani special"
