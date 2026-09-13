@@ -1,27 +1,40 @@
 package com.babatiffin.bts.feature.home
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.babatiffin.bts.feature.menu.MealDiscoveryState
 import com.babatiffin.bts.data.menu.Meal
 import com.babatiffin.bts.feature.menu.MealImage
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -33,6 +46,9 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        if (!state.loading && state.meals.isNotEmpty()) {
+            item { PromotionSlideshow(promotionalMeals(state.meals)) }
+        }
         item {
             Text(
                 text = "Ghar jaisa khana, every day",
@@ -62,6 +78,60 @@ fun HomeScreen(
             }
         }
     }
+}
+
+@Composable
+private fun PromotionSlideshow(promotions: List<Meal>) {
+    if (promotions.isEmpty()) return
+    val pagerState = rememberPagerState(pageCount = { promotions.size })
+    LaunchedEffect(promotions.size) {
+        if (promotions.size > 1) {
+            while (true) {
+                delay(4_000)
+                pagerState.animateScrollToPage((pagerState.currentPage + 1) % promotions.size)
+            }
+        }
+    }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(210.dp)) { page ->
+            val meal = promotions[page]
+            Box(Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp))) {
+                MealImage(meal, Modifier.fillMaxSize())
+                Column(
+                    Modifier.align(Alignment.BottomStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.62f)).padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(promotionTitle(meal), color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(meal.description, color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
+                }
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            repeat(promotions.size) { index ->
+                Spacer(
+                    Modifier.size(if (pagerState.currentPage == index) 18.dp else 7.dp, 7.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(if (pagerState.currentPage == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+                )
+            }
+        }
+    }
+}
+
+private fun promotionalMeals(meals: List<Meal>): List<Meal> {
+    val keywords = listOf("biryani", "paneer", "chicken", "breakfast", "fish")
+    val selected = keywords.mapNotNull { keyword ->
+        meals.firstOrNull { it.name.contains(keyword, ignoreCase = true) || it.category.equals(keyword, ignoreCase = true) }
+    }.distinctBy(Meal::id)
+    return (selected + meals).distinctBy(Meal::id).take(6)
+}
+
+private fun promotionTitle(meal: Meal): String = when {
+    meal.name.contains("biryani", ignoreCase = true) -> "Biryani special"
+    meal.foodType.equals("chicken", ignoreCase = true) -> "Chicken favourite"
+    meal.foodType.equals("fish", ignoreCase = true) -> "Fresh fish special"
+    meal.category.equals("breakfast", ignoreCase = true) -> "Start your day right"
+    else -> meal.name
 }
 
 @Composable
