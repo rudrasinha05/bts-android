@@ -23,7 +23,8 @@ class CustomerViewModel(private val repository: CustomerRepository?) : ViewModel
     val state = mutableState.asStateFlow()
 
     fun load(userId: String?) {
-        if (userId == null || userId == mutableState.value.userId) return
+        if (userId == null) { mutableState.value = CustomerState(); return }
+        if (userId == mutableState.value.userId) return
         if (repository == null) { mutableState.value = CustomerState(userId = userId, message = "Backend configuration required."); return }
         viewModelScope.launch {
             mutableState.value = CustomerState(loading = true, userId = userId)

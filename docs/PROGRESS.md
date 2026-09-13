@@ -153,3 +153,7 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Release signing reads only from ignored local `keystore.properties`; no signing secret is committed.
 - CI builds APK and AAB release candidates and retains them for seven days.
 - Final release remains gated by signed artifact generation and the real-device acceptance checklist.
+- All 71 dish photos embedded in the project manual are bundled as an optimized meal atlas and mapped to matching catalogue meals.
+- Home discovery now renders data-backed horizontal meal rails, with photo and Add action on every Home/Menu card.
+- Startup requests location access for guests and automatically refreshes the selected saved-address coordinates for authenticated customers when a device location is available.
+- Checkout requires authentication, a saved delivery address and explicit delivery-location confirmation before Pay is enabled.

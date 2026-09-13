@@ -21,7 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.babatiffin.bts.data.cart.CartLine
+import com.babatiffin.bts.data.customer.Address
 import android.app.Activity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun CheckoutScreen(
@@ -31,9 +36,13 @@ fun CheckoutScreen(
     onApplyCoupon: () -> Unit,
     onPaymentChoice: (PaymentChoice) -> Unit,
     onMealType: (String) -> Unit,
+    address: Address?,
+    addressesLoading: Boolean,
+    onManageAddress: () -> Unit,
     onPay: (Activity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var locationConfirmed by remember(address?.id) { mutableStateOf(false) }
     var subtotal = 0.0
     for (line in lines) subtotal += line.lineTotal
     val coupon = state.appliedCoupon
@@ -67,6 +76,28 @@ fun CheckoutScreen(
             }
         }
 
+        Text("Delivery location", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        when {
+            addressesLoading -> CircularProgressIndicator()
+            address == null -> {
+                Text("Add at least one delivery address before checkout.", color = MaterialTheme.colorScheme.error)
+                Button(onClick = onManageAddress, modifier = Modifier.fillMaxWidth()) { Text("Add delivery address") }
+            }
+            else -> Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("${address.label}${if (address.isDefault) " · Default" else ""}", fontWeight = FontWeight.Bold)
+                    Text("${address.line1}, ${address.city} - ${address.pincode}")
+                    if (address.latitude != null && address.longitude != null) {
+                        Text("Location updated", color = MaterialTheme.colorScheme.primary)
+                    }
+                    Button(onClick = { locationConfirmed = true }, enabled = !locationConfirmed, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (locationConfirmed) "Location confirmed" else "Confirm delivery location")
+                    }
+                    OutlinedButton(onClick = onManageAddress, modifier = Modifier.fillMaxWidth()) { Text("Change address") }
+                }
+            }
+        }
+
         Text("Coupon", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         OutlinedTextField(
             value = state.couponCode,
@@ -96,9 +127,10 @@ fun CheckoutScreen(
 
         val activity = androidx.compose.ui.platform.LocalContext.current as Activity
         val walletReady = state.paymentChoice != PaymentChoice.Wallet || (state.wallet?.balance ?: 0.0) >= total
-        Button(onClick = { onPay(activity) }, enabled = !state.loading && lines.size > 0 && walletReady, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = { onPay(activity) }, enabled = !state.loading && lines.isNotEmpty() && walletReady && address != null && locationConfirmed, modifier = Modifier.fillMaxWidth()) {
             Text("Pay ₹${total.toInt()}")
         }
+        if (address != null && !locationConfirmed) Text("Confirm delivery location to continue.", color = MaterialTheme.colorScheme.error)
         if (state.paymentChoice == PaymentChoice.Wallet && !walletReady) Text("Insufficient wallet balance", color = MaterialTheme.colorScheme.error)
         Text(
             "Secure payment is created and verified by the BTS server. No Razorpay secret is stored in this app.",

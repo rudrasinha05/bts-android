@@ -65,6 +65,7 @@ import com.babatiffin.bts.feature.operations.OperationsViewModel
 import com.babatiffin.bts.feature.operations.PackingScreen
 import com.babatiffin.bts.core.security.canAccessDeliveryOperations
 import com.babatiffin.bts.core.security.canAccessKitchenOperations
+import com.babatiffin.bts.core.location.LocationAccessEffect
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -145,6 +146,12 @@ fun BtsNavGraph(
     })
     val customerState by customerViewModel.state.collectAsState()
     LaunchedEffect(authState.userId) { customerViewModel.load(authState.userId) }
+    val deliveryAddress = customerState.addresses.firstOrNull { it.isDefault } ?: customerState.addresses.firstOrNull()
+    LocationAccessEffect(
+        authenticated = authState.authenticated,
+        address = deliveryAddress,
+        onLocation = customerViewModel::updateLocation,
+    )
     val engagementViewModel: EngagementViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T = EngagementViewModel(SupabaseProvider.client?.let(::SupabaseEngagementRepository)) as T
@@ -309,6 +316,9 @@ fun BtsNavGraph(
                     onApplyCoupon = checkoutViewModel::applyCoupon,
                     onPaymentChoice = checkoutViewModel::choosePayment,
                     onMealType = checkoutViewModel::chooseMealType,
+                    address = deliveryAddress,
+                    addressesLoading = customerState.loading,
+                    onManageAddress = { navigate(BtsDestination.Profile.route) },
                     onPay = { activity -> checkoutViewModel.pay(activity, cartLines) },
                 )
             }
