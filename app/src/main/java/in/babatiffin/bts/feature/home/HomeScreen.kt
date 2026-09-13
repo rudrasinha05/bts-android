@@ -35,6 +35,7 @@ import com.babatiffin.bts.feature.menu.MealDiscoveryState
 import com.babatiffin.bts.data.menu.Meal
 import com.babatiffin.bts.feature.menu.MealImage
 import kotlinx.coroutines.delay
+import java.util.Calendar
 
 @Composable
 fun HomeScreen(
@@ -156,13 +157,20 @@ private fun HomeMealCard(meal: Meal, onOpenMeal: (String) -> Unit, onAddMeal: (M
     }
 }
 
-private fun homeRails(meals: List<Meal>): List<Pair<String, List<Meal>>> = listOf(
-    "Popular meals" to meals.take(10),
-    "Breakfast" to meals.filter { it.category == "breakfast" },
-    "Lunch" to meals.filter { it.category == "lunch" },
-    "Dinner" to meals.filter { it.category == "dinner" },
-    "Chicken favourites" to meals.filter { it.foodType == "chicken" },
-    "Egg meals" to meals.filter { it.foodType == "egg" },
-    "Fish meals" to meals.filter { it.foodType == "fish" },
-    "Specials" to meals.filter { it.category == "special" || it.foodType == "special" },
-).filter { it.second.isNotEmpty() }
+private fun homeRails(meals: List<Meal>): List<Pair<String, List<Meal>>> {
+    val timelyCategory = currentMealCategory()
+    return listOf(
+        "Popular meals" to meals.take(10),
+        "${timelyCategory.replaceFirstChar(Char::uppercase)} right now" to meals.filter { it.category == timelyCategory },
+        "Chicken favourites" to meals.filter { it.foodType == "chicken" },
+        "Egg meals" to meals.filter { it.foodType == "egg" },
+        "Fish meals" to meals.filter { it.foodType == "fish" },
+        "Specials" to meals.filter { it.category == "special" || it.foodType == "special" },
+    ).filter { it.second.isNotEmpty() }
+}
+
+private fun currentMealCategory(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+    in 5..10 -> "breakfast"
+    in 11..16 -> "lunch"
+    else -> "dinner"
+}

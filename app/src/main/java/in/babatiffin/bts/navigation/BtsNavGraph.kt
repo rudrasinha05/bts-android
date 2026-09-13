@@ -253,7 +253,12 @@ fun BtsNavGraph(
                 )
             }
             composable(BtsDestination.Plans.route) {
-                PlansScreen(state = subscriptionState, onManage = { navigate(BtsDestination.Subscription.route) })
+                PlansScreen(
+                    state = subscriptionState,
+                    mealById = mealState.meals.associateBy { it.id },
+                    orderHistory = ordersState.orders,
+                    onPlanAction = { navigate(BtsDestination.Subscription.route) },
+                )
             }
             composable(BtsDestination.Dashboard.route) {
                 PlaceholderScreen("Dashboard", "Customer dashboard shell is ready for backend-driven widgets.")

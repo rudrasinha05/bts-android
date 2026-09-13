@@ -1,5 +1,6 @@
 package com.babatiffin.bts.feature.menu
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,15 +8,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,7 +41,9 @@ fun MenuScreen(
     onAddMeal: (Meal) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.padding(horizontal = 16.dp)) {
+    var showCategories by rememberSaveable { mutableStateOf(false) }
+    Box(modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Text("Our menu", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 16.dp))
         Text("Choose a category and discover today's available meals.", modifier = Modifier.padding(bottom = 8.dp))
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -50,7 +62,7 @@ fun MenuScreen(
             state.visibleMeals.isEmpty() -> Text("No meals available for this selection.", modifier = Modifier.padding(24.dp))
             else -> LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.weight(1f).padding(top = 8.dp),
+                modifier = Modifier.weight(1f).padding(top = 8.dp, bottom = 88.dp),
             ) {
                 items(state.visibleMeals.size) { index ->
                     val meal = state.visibleMeals[index]
@@ -70,4 +82,39 @@ fun MenuScreen(
             }
         }
     }
+        FloatingActionButton(
+            onClick = { showCategories = true },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        ) { Text("Menu", fontWeight = FontWeight.Bold) }
+    }
+    if (showCategories) {
+        AlertDialog(
+            onDismissRequest = { showCategories = false },
+            title = { Text("Browse full menu") },
+            text = {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item { Text("Meal time", fontWeight = FontWeight.Bold) }
+                    items(state.categories.size) { index ->
+                        val category = state.categories[index]
+                        OutlinedButton(
+                            onClick = { onFoodType("all"); onCategory(category); showCategories = false },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(category.replaceFirstChar(Char::uppercase)) }
+                    }
+                    item { Text("Food preference", fontWeight = FontWeight.Bold) }
+                    items(menuFoodTypes.size) { index ->
+                        val foodType = menuFoodTypes[index]
+                        OutlinedButton(
+                            onClick = { onCategory("all"); onFoodType(foodType); showCategories = false },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(foodType.replaceFirstChar(Char::uppercase)) }
+                    }
+                }
+            },
+            confirmButton = { Button(onClick = { onCategory("all"); onFoodType("all"); showCategories = false }) { Text("Show all") } },
+        )
+    }
 }
+
+private val menuFoodTypes = listOf("all", "veg", "egg", "chicken", "fish", "special")

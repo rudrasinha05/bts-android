@@ -25,7 +25,11 @@ class SubscriptionViewModel(private val repository: SubscriptionRepository?) : V
     init { refreshPlans() }
 
     fun loadForUser(userId: String?) {
-        if (userId == null || userId == _state.value.userId) return
+        if (userId == null) {
+            _state.value = _state.value.copy(loading = false, subscriptions = emptyList(), userId = null, error = null)
+            return
+        }
+        if (userId == _state.value.userId) return
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true, userId = userId, error = null)
             runCatching { repository?.subscriptions(userId).orEmpty() }

@@ -24,7 +24,8 @@ class OrdersViewModel(private val repository: OrderRepository?) : ViewModel() {
     val state: StateFlow<OrdersState> = _state.asStateFlow()
 
     fun load(userId: String?) {
-        if (userId == null || (userId == _state.value.userId && _state.value.orders.isNotEmpty())) return
+        if (userId == null) { _state.value = OrdersState(); return }
+        if (userId == _state.value.userId && _state.value.orders.isNotEmpty()) return
         if (repository == null) { _state.value = OrdersState(error = "Backend configuration is required."); return }
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true, userId = userId, error = null)

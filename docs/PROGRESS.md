@@ -157,3 +157,7 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Home discovery now renders data-backed horizontal meal rails, with photo and Add action on every Home/Menu card.
 - Startup requests location access for guests and automatically refreshes the selected saved-address coordinates for authenticated customers when a device location is available.
 - Checkout requires authentication, a saved delivery address and explicit delivery-location confirmation before Pay is enabled.
+- Plans show the complete active catalogue when no subscription exists and mark up to two recommendations from RLS-scoped meal/order history (popular plans are the no-history fallback).
+- Existing subscribers see their current plan and Upgrade actions on every higher-priced successor plan.
+- Home prioritizes only the current Breakfast, Lunch or Dinner rail by device-local time.
+- Menu includes a bottom-right floating category action for meal-time and food-preference filtering.
