@@ -38,7 +38,6 @@ import com.babatiffin.bts.feature.cart.AddOnDialog
 import com.babatiffin.bts.feature.buildmeal.BuildMealScreen
 import com.babatiffin.bts.data.subscription.SupabaseSubscriptionRepository
 import com.babatiffin.bts.feature.subscription.ManageSubscriptionScreen
-import com.babatiffin.bts.feature.subscription.PlansScreen
 import com.babatiffin.bts.feature.subscription.SubscriptionViewModel
 import com.babatiffin.bts.data.order.SupabaseOrderRepository
 import com.babatiffin.bts.feature.orders.OrderDetailScreen
@@ -252,14 +251,6 @@ fun BtsNavGraph(
                     },
                 )
             }
-            composable(BtsDestination.Plans.route) {
-                PlansScreen(
-                    state = subscriptionState,
-                    mealById = mealState.meals.associateBy { it.id },
-                    orderHistory = ordersState.orders,
-                    onPlanAction = { navigate(BtsDestination.Subscription.route) },
-                )
-            }
             composable(BtsDestination.Dashboard.route) {
                 PlaceholderScreen("Dashboard", "Customer dashboard shell is ready for backend-driven widgets.")
             }
@@ -279,7 +270,12 @@ fun BtsNavGraph(
                 )
             }
             composable(BtsDestination.Subscription.route) {
-                ManageSubscriptionScreen(state = subscriptionState, onStatus = subscriptionViewModel::setStatus)
+                ManageSubscriptionScreen(
+                    state = subscriptionState,
+                    mealById = mealState.meals.associateBy { it.id },
+                    orderHistory = ordersState.orders,
+                    onStatus = subscriptionViewModel::setStatus,
+                )
             }
             composable(BtsDestination.Orders.route) {
                 OrdersScreen(state = ordersState, onOpen = { id ->

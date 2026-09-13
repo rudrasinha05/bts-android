@@ -161,3 +161,5 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Existing subscribers see their current plan and Upgrade actions on every higher-priced successor plan.
 - Home prioritizes only the current Breakfast, Lunch or Dinner rail by device-local time.
 - Menu includes a bottom-right floating category action for meal-time and food-preference filtering.
+- Plans are consolidated into the single Subscription destination; the duplicate Plans route and drawer entry were removed.
+- Subscription plans are organized into horizontal Weekly, Monthly, Quarterly and Yearly rails; unavailable cycles render an explicit empty state instead of fabricated pricing.

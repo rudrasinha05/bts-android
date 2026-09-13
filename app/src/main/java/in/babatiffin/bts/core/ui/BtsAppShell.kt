@@ -67,7 +67,6 @@ private val primaryItems = listOf(
 )
 
 private val drawerItems = listOf(
-    ShellItem(BtsDestination.Plans.route, "Plans", Icons.Default.RestaurantMenu),
     ShellItem(BtsDestination.Dashboard.route, "Dashboard", Icons.Default.Dashboard),
     ShellItem(BtsDestination.Subscription.route, "Subscription", Icons.Default.ReceiptLong),
     ShellItem(BtsDestination.Nutrition.route, "Nutrition", Icons.Default.RestaurantMenu),
@@ -260,7 +259,6 @@ private fun BtsTopBar(
 private fun routeTitle(route: String?): String = when (route) {
     BtsDestination.Home.route -> "Home"
     BtsDestination.Menu.route -> "Menu"
-    BtsDestination.Plans.route -> "Plans"
     BtsDestination.Dashboard.route -> "Dashboard"
     BtsDestination.BuildMeal.route -> "Build Meal"
     BtsDestination.Subscription.route -> "Subscription"

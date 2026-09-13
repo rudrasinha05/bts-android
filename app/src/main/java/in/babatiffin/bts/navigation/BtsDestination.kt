@@ -6,7 +6,6 @@ sealed class BtsDestination(val route: String) {
     data object MealDetail : BtsDestination("meal/{mealId}") {
         fun createRoute(mealId: String) = "meal/$mealId"
     }
-    data object Plans : BtsDestination("plans")
     data object Dashboard : BtsDestination("dashboard")
     data object BuildMeal : BtsDestination("build-meal")
     data object Subscription : BtsDestination("subscription")
