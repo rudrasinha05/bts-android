@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.babatiffin.bts.data.menu.Meal
 
 @Composable
 fun MenuScreen(
@@ -26,6 +27,7 @@ fun MenuScreen(
     onFoodType: (String) -> Unit,
     onRetry: () -> Unit,
     onOpenMeal: (String) -> Unit,
+    onAddMeal: (Meal) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.padding(horizontal = 16.dp)) {
@@ -59,6 +61,7 @@ fun MenuScreen(
                             }
                             Text(meal.description)
                             Text("${meal.category.replaceFirstChar(Char::uppercase)} • ${meal.foodType.replaceFirstChar(Char::uppercase)}", style = MaterialTheme.typography.labelMedium)
+                            Button(onClick = { onAddMeal(meal) }, modifier = Modifier.fillMaxWidth()) { Text("Add") }
                         }
                     }
                 }

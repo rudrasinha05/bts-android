@@ -6,6 +6,7 @@ import com.babatiffin.bts.data.cart.CartAddOn
 import com.babatiffin.bts.data.cart.CartLine
 import com.babatiffin.bts.data.cart.CartRepository
 import com.babatiffin.bts.feature.menu.MealDiscoveryState
+import com.babatiffin.bts.data.menu.Meal
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -28,6 +29,26 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
             addOns = addOns,
         )
         viewModelScope.launch { repository.add(line) }
+    }
+
+    fun addBaseMeal(meal: Meal): String {
+        val lineId = "${meal.id}-${System.currentTimeMillis()}"
+        viewModelScope.launch {
+            repository.add(CartLine(id = lineId, mealId = meal.id, mealName = meal.name, unitPrice = meal.price))
+        }
+        return lineId
+    }
+
+    fun changeQuantity(lineId: String, current: Int, delta: Int) = viewModelScope.launch {
+        repository.setQuantity(lineId, current + delta)
+    }
+
+    fun changeAddOn(lineId: String, addOn: Meal, current: Int, delta: Int) = viewModelScope.launch {
+        repository.setAddOnQuantity(
+            lineId,
+            CartAddOn(addOn.id, addOn.name, addOn.price, current),
+            (current + delta).coerceIn(0, 10),
+        )
     }
 
     fun changeQuantity(line: CartLine, delta: Int) = viewModelScope.launch {

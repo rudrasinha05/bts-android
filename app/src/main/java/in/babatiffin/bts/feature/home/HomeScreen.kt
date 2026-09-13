@@ -16,12 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.babatiffin.bts.feature.menu.MealDiscoveryState
+import com.babatiffin.bts.data.menu.Meal
 
 @Composable
 fun HomeScreen(
     state: MealDiscoveryState,
     onOpenMenu: () -> Unit,
     onOpenMeal: (String) -> Unit,
+    onAddMeal: (Meal) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -52,7 +54,10 @@ fun HomeScreen(
                             Text(meal.name, style = MaterialTheme.typography.titleMedium)
                             Text(meal.description, style = MaterialTheme.typography.bodyMedium)
                         }
-                        Text("₹${meal.price.toInt()}", fontWeight = FontWeight.SemiBold)
+                        Column {
+                            Text("₹${meal.price.toInt()}", fontWeight = FontWeight.SemiBold)
+                            Button(onClick = { onAddMeal(meal) }) { Text("Add") }
+                        }
                     }
                 }
             }

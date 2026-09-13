@@ -1,6 +1,6 @@
 # BTS Android Progress
 
-Last updated: 2026-09-10
+Last updated: 2026-09-13
 
 ## BDR status
 - Architecture: FROZEN
@@ -22,8 +22,8 @@ Last updated: 2026-09-10
 - M10 Profile + addresses + nutrition tracker + support — COMPLETE (CI + emulator validation confirmed)
 - M11 Notifications + location + referrals — COMPLETE
 - M12 Role-gated operations surfaces — COMPLETE (CI + role-gated emulator validation confirmed)
-- M13 Hardening — IN PROGRESS
-- M14 Acceptance testing + APK/AAB — NOT STARTED
+- M13 Hardening — COMPLETE
+- M14 Acceptance testing + APK/AAB — IN PROGRESS
 
 ## M1 delivered
 - BTS light/dark color tokens
@@ -143,3 +143,13 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Centralized operations-role predicates and added unit coverage for customer, staff and admin boundaries.
 - Disabled Android backup and cleartext network traffic for production data protection.
 - Added Android lint as a required CI gate alongside compilation and unit tests.
+- Fixed API 23 lint blockers and added launcher/backup resource declarations.
+- Added visible retry/error states for operations loads and mutations.
+- Removed anonymous/authenticated RPC execution from the internal RLS event-trigger helper.
+- Enabled optimized release builds and added a release compilation gate.
+- Supabase leaked-password protection is unavailable on the current Free plan and is recorded as an accepted hosting-plan limitation.
+
+## M14 release preparation started
+- Release signing reads only from ignored local `keystore.properties`; no signing secret is committed.
+- CI builds APK and AAB release candidates and retains them for seven days.
+- Final release remains gated by signed artifact generation and the real-device acceptance checklist.

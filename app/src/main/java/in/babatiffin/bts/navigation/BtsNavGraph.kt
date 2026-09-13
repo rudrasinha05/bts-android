@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.babatiffin.bts.data.cart.DataStoreCartRepository
 import com.babatiffin.bts.feature.cart.CartScreen
 import com.babatiffin.bts.feature.cart.CartViewModel
+import com.babatiffin.bts.feature.cart.AddOnDialog
 import com.babatiffin.bts.feature.buildmeal.BuildMealScreen
 import com.babatiffin.bts.data.subscription.SupabaseSubscriptionRepository
 import com.babatiffin.bts.feature.subscription.ManageSubscriptionScreen
@@ -110,6 +111,8 @@ fun BtsNavGraph(
         override fun <T : ViewModel> create(modelClass: Class<T>): T = CartViewModel(DataStoreCartRepository(context)) as T
     })
     val cartLines by cartViewModel.lines.collectAsState()
+    var quickAddLineId by rememberSaveable { mutableStateOf<String?>(null) }
+    var quickAddMealId by rememberSaveable { mutableStateOf<String?>(null) }
     val subscriptionViewModel: SubscriptionViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T = SubscriptionViewModel(
@@ -206,6 +209,10 @@ fun BtsNavGraph(
                     state = mealState,
                     onOpenMenu = { navigate(BtsDestination.Menu.route) },
                     onOpenMeal = { id -> mealViewModel.selectMeal(id); navController.navigate(BtsDestination.MealDetail.createRoute(id)) },
+                    onAddMeal = { meal ->
+                        quickAddMealId = meal.id
+                        quickAddLineId = cartViewModel.addBaseMeal(meal)
+                    },
                     onRetry = mealViewModel::refresh,
                 )
             }
@@ -216,6 +223,10 @@ fun BtsNavGraph(
                     onFoodType = mealViewModel::selectFoodType,
                     onRetry = mealViewModel::refresh,
                     onOpenMeal = { id -> mealViewModel.selectMeal(id); navController.navigate(BtsDestination.MealDetail.createRoute(id)) },
+                    onAddMeal = { meal ->
+                        quickAddMealId = meal.id
+                        quickAddLineId = cartViewModel.addBaseMeal(meal)
+                    },
                 )
             }
             composable(
@@ -310,6 +321,18 @@ fun BtsNavGraph(
             composable(BtsDestination.Packing.route) { if(authState.roles.canAccessKitchenOperations())PackingScreen(operationsState,{operationsViewModel.load(authState.roles)},operationsViewModel::packing)else PlaceholderScreen("Restricted","Packing access requires an operations role.") }
             composable(BtsDestination.Inventory.route) { if(authState.roles.canAccessKitchenOperations())InventoryScreen(operationsState){operationsViewModel.load(authState.roles)}else PlaceholderScreen("Restricted","Inventory access requires an operations role.") }
             composable(BtsDestination.Delivery.route) { if(authState.roles.canAccessDeliveryOperations())DeliveryScreen(operationsState,{operationsViewModel.load(authState.roles)},operationsViewModel::delivery)else PlaceholderScreen("Restricted","Delivery access requires an operations role.") }
+        }
+        val quickAddMeal = mealState.meals.firstOrNull { it.id == quickAddMealId }
+        val quickAddLine = cartLines.firstOrNull { it.id == quickAddLineId }
+        if (quickAddMeal != null && quickAddLineId != null) {
+            AddOnDialog(
+                meal = quickAddMeal,
+                line = quickAddLine,
+                addOns = mealState.addOns,
+                onMealQuantity = { current, delta -> quickAddLineId?.let { cartViewModel.changeQuantity(it, current, delta) } },
+                onAddOnQuantity = { addOn, current, delta -> quickAddLineId?.let { cartViewModel.changeAddOn(it, addOn, current, delta) } },
+                onDismiss = { quickAddLineId = null; quickAddMealId = null },
+            )
         }
     }
 }

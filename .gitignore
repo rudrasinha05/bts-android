@@ -14,3 +14,4 @@ app/release/
 .env.*
 google-services.json
 secrets.properties
+keystore.properties

@@ -32,6 +32,7 @@ interface CartRepository {
     val lines: Flow<List<CartLine>>
     suspend fun add(line: CartLine)
     suspend fun setQuantity(lineId: String, quantity: Int)
+    suspend fun setAddOnQuantity(lineId: String, addOn: CartAddOn, quantity: Int)
     suspend fun remove(lineId: String)
     suspend fun clear()
 }
@@ -49,6 +50,14 @@ class DataStoreCartRepository(context: Context) : CartRepository {
     override suspend fun setQuantity(lineId: String, quantity: Int) = update { lines ->
         if (quantity <= 0) lines.filterNot { it.id == lineId }
         else lines.map { if (it.id == lineId) it.copy(quantity = quantity.coerceAtMost(20)) else it }
+    }
+    override suspend fun setAddOnQuantity(lineId: String, addOn: CartAddOn, quantity: Int) = update { lines ->
+        lines.map { line ->
+            if (line.id != lineId) line else {
+                val withoutAddOn = line.addOns.filterNot { it.id == addOn.id }
+                line.copy(addOns = if (quantity <= 0) withoutAddOn else withoutAddOn + addOn.copy(quantity = quantity.coerceAtMost(10)))
+            }
+        }
     }
     override suspend fun remove(lineId: String) = update { it.filterNot { line -> line.id == lineId } }
     override suspend fun clear() { store.edit { it.remove(key) } }
