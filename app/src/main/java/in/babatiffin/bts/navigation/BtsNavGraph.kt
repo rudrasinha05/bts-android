@@ -308,7 +308,7 @@ fun BtsNavGraph(
                 OrderDetailScreen(state = ordersState, mealNames = mealState.meals.associate { it.id to it.name })
             }
             composable(BtsDestination.Nutrition.route) {
-                NutritionScreen(customerState, mealState.meals.associate { it.id to it.name }, customerViewModel::saveNutrition)
+                NutritionScreen(customerState, ordersState.orders, customerViewModel::saveNutrition)
             }
             composable(BtsDestination.Profile.route) {
                 ProfileScreen(

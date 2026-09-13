@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -21,8 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.babatiffin.bts.data.order.OrderDetails
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @Composable fun ProfileScreen(
     state: CustomerState,
@@ -179,11 +185,156 @@ private fun ProfileMenuRow(icon: ImageVector, title: String, onClick: () -> Unit
     )
 }
 
-@Composable fun NutritionScreen(state: CustomerState, mealNames: Map<String,String>, onSave:(String,String,String,String,String,String)->Unit){
-    var goal by remember(state.nutrition){mutableStateOf(state.nutrition?.goal?:"")};var calories by remember(state.nutrition){mutableStateOf(state.nutrition?.targetCalories?.toString()?:"")};var protein by remember(state.nutrition){mutableStateOf(state.nutrition?.targetProtein?.toString()?:"")};var carbs by remember(state.nutrition){mutableStateOf(state.nutrition?.targetCarbs?.toString()?:"")};var fat by remember(state.nutrition){mutableStateOf(state.nutrition?.targetFat?.toString()?:"")};var fiber by remember(state.nutrition){mutableStateOf(state.nutrition?.targetFiber?.toString()?:"")}
-    LazyColumn(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){item{Text("Nutrition tracker",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);Text("Set daily goals");Field("Goal",goal){goal=it};Field("Calories",calories){calories=it};Field("Protein (g)",protein){protein=it};Field("Carbs (g)",carbs){carbs=it};Field("Fat (g)",fat){fat=it};Field("Fiber (g)",fiber){fiber=it};Button({onSave(goal,calories,protein,carbs,fat,fiber)}){Text("Save goals")};HorizontalDivider();Text("Meal nutrition",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)};items(state.mealNutrition.size){i->val n=state.mealNutrition[i];Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp)){Text(mealNames[n.mealId]?:"Meal",fontWeight=FontWeight.Bold);Text("${n.calories.toInt()} kcal · P ${n.protein.toInt()}g · C ${n.carbs.toInt()}g · F ${n.fat.toInt()}g · Fiber ${n.fiber.toInt()}g")}}}}
+@Composable
+fun NutritionScreen(
+    state: CustomerState,
+    orderHistory: List<OrderDetails>,
+    onSave: (String, String, String, String, String, String) -> Unit,
+) {
+    var goal by remember(state.nutrition) { mutableStateOf(state.nutrition?.goal.orEmpty()) }
+    var calories by remember(state.nutrition) { mutableStateOf(state.nutrition?.targetCalories?.toString().orEmpty()) }
+    var protein by remember(state.nutrition) { mutableStateOf(state.nutrition?.targetProtein?.toString().orEmpty()) }
+    var carbs by remember(state.nutrition) { mutableStateOf(state.nutrition?.targetCarbs?.toString().orEmpty()) }
+    var fat by remember(state.nutrition) { mutableStateOf(state.nutrition?.targetFat?.toString().orEmpty()) }
+    var fiber by remember(state.nutrition) { mutableStateOf(state.nutrition?.targetFiber?.toString().orEmpty()) }
+    val formatter = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
+    val dates = remember(orderHistory) {
+        val calendar = Calendar.getInstance()
+        (0..13).map {
+            formatter.format(calendar.time).also { calendar.add(Calendar.DAY_OF_YEAR, -1) }
+        }.reversed()
+    }
+    val nutritionByMeal = state.mealNutrition.associateBy { it.mealId }
+    val daily = dates.associateWith { date ->
+        calculateNutrition(orderHistory.filter { it.order.scheduledDate == date }, nutritionByMeal)
+    }
+    val today = daily[dates.last()] ?: NutritionSummary()
+    val target = state.nutrition
+
+    LazyColumn(
+        Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            Text("Nutrition tracker", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text("Daily nutrition versus your targets", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        item {
+            NutritionCard("Today's progress") {
+                NutritionProgress("Calories", today.calories, target?.targetCalories?.toDouble(), "kcal")
+                NutritionProgress("Protein", today.protein, target?.targetProtein?.toDouble(), "g")
+                NutritionProgress("Carbs", today.carbs, target?.targetCarbs?.toDouble(), "g")
+                NutritionProgress("Fat", today.fat, target?.targetFat?.toDouble(), "g")
+                NutritionProgress("Fibre", today.fiber, target?.targetFiber?.toDouble(), "g")
+                Text(
+                    "Nutrition values are estimates calculated from meal portions. This is not medical advice.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        item {
+            NutritionCard("Your targets") {
+                Field("Goal", goal) { goal = it }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Field("Calories", calories, Modifier.weight(1f), KeyboardType.Number) { calories = it.filter(Char::isDigit) }
+                    Field("Protein (g)", protein, Modifier.weight(1f), KeyboardType.Number) { protein = it.filter(Char::isDigit) }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Field("Carbs (g)", carbs, Modifier.weight(1f), KeyboardType.Number) { carbs = it.filter(Char::isDigit) }
+                    Field("Fat (g)", fat, Modifier.weight(1f), KeyboardType.Number) { fat = it.filter(Char::isDigit) }
+                }
+                Field("Fibre (g)", fiber, keyboardType = KeyboardType.Number) { fiber = it.filter(Char::isDigit) }
+                Button(
+                    onClick = { onSave(goal, calories, protein, carbs, fat, fiber) },
+                    enabled = !state.loading,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Save targets") }
+            }
+        }
+        item {
+            NutritionCard("History (14 days)") {
+                if (daily.values.none { it.hasData }) {
+                    Text("No history yet", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Order meals to see your nutrition trend.")
+                } else {
+                    val maxCalories = daily.values.maxOf { it.calories }.coerceAtLeast(1.0)
+                    daily.filterValues { it.hasData }.forEach { (date, value) ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(date)
+                            Text("${value.calories.toInt()} kcal · ${value.protein.toInt()}g protein")
+                        }
+                        LinearProgressIndicator(
+                            progress = { (value.calories / maxCalories).toFloat().coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NutritionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            content()
+        }
+    }
+}
+
+@Composable
+private fun NutritionProgress(label: String, value: Double, target: Double?, unit: String) {
+    val progress = if (target != null && target > 0) (value / target).toFloat().coerceIn(0f, 1f) else 0f
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, fontWeight = FontWeight.SemiBold)
+        Text("${value.toInt()}$unit${target?.let { " / ${it.toInt()}$unit" }.orEmpty()}")
+    }
+    LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+}
+
+private data class NutritionSummary(
+    val calories: Double = 0.0,
+    val protein: Double = 0.0,
+    val carbs: Double = 0.0,
+    val fat: Double = 0.0,
+    val fiber: Double = 0.0,
+) {
+    val hasData get() = calories > 0 || protein > 0 || carbs > 0 || fat > 0 || fiber > 0
+}
+
+private fun calculateNutrition(
+    orders: List<OrderDetails>,
+    nutritionByMeal: Map<String, com.babatiffin.bts.data.customer.MealNutrition>,
+): NutritionSummary = orders.flatMap(OrderDetails::items).fold(NutritionSummary()) { total, item ->
+    val nutrition = item.mealId?.let(nutritionByMeal::get)
+    NutritionSummary(
+        total.calories + (nutrition?.calories ?: 0.0) * item.quantity,
+        total.protein + (nutrition?.protein ?: 0.0) * item.quantity,
+        total.carbs + (nutrition?.carbs ?: 0.0) * item.quantity,
+        total.fat + (nutrition?.fat ?: 0.0) * item.quantity,
+        total.fiber + (nutrition?.fiber ?: 0.0) * item.quantity,
+    )
 }
 
 @Composable fun SupportScreen(state: CustomerState,onCreate:(String,String,String)->Unit){var subject by remember{mutableStateOf("")};var message by remember{mutableStateOf("")};var category by remember{mutableStateOf("general")};LazyColumn(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){item{Text("Support",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);Field("Subject",subject){subject=it};Field("Message",message){message=it};Field("Category",category){category=it};Button({onCreate(subject,message,category)}){Text("Create ticket")};state.message?.let{Text(it)};HorizontalDivider();Text("Your tickets",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)};items(state.tickets.size){i->val t=state.tickets[i];Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp)){Text(t.subject,fontWeight=FontWeight.Bold);Text("${t.category} · ${t.status}");Text(t.message)}}}}}
 
-@Composable private fun Field(label:String,value:String,onValue:(String)->Unit){OutlinedTextField(value,onValue,label={Text(label)},modifier=Modifier.fillMaxWidth(),singleLine=true)}
+@Composable
+private fun Field(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    onValue: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValue,
+        label = { Text(label) },
+        modifier = modifier.fillMaxWidth(),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        singleLine = true,
+    )
+}
