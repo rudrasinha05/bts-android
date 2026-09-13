@@ -97,7 +97,11 @@ import androidx.compose.ui.unit.dp
             ProfileSection("Food & membership") {
                 ProfileMenuRow(Icons.Outlined.ReceiptLong, "Your orders", onOrders)
                 HorizontalDivider()
-                ProfileMenuRow(Icons.Outlined.Home, "Address book") { showAddressBook = !showAddressBook }
+                ProfileMenuRow(
+                    icon = Icons.Outlined.Home,
+                    title = "Address book",
+                    onClick = { showAddressBook = !showAddressBook },
+                )
                 HorizontalDivider()
                 ProfileMenuRow(Icons.Outlined.Subscriptions, "Subscription plans", onSubscription)
                 HorizontalDivider()
