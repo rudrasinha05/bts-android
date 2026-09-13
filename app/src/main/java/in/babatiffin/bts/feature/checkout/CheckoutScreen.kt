@@ -9,7 +9,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -43,8 +45,8 @@ fun CheckoutScreen(
     modifier: Modifier = Modifier,
 ) {
     var locationConfirmed by remember(address?.id) { mutableStateOf(false) }
-    var subtotal = 0.0
-    for (line in lines) subtotal += line.lineTotal
+    var termsAccepted by remember { mutableStateOf(false) }
+    val subtotal = lines.sumOf(CartLine::lineTotal)
     val coupon = state.appliedCoupon
     val amountDiscount = coupon?.discountAmount ?: 0.0
     val percentDiscount = subtotal * (coupon?.discountPercent ?: 0.0) / 100.0
@@ -52,31 +54,21 @@ fun CheckoutScreen(
     if (discount < 0.0) discount = 0.0
     if (discount > subtotal) discount = subtotal
     val total = subtotal - discount
+    val locationReady = address?.latitude != null && address.longitude != null
 
     Column(
         modifier = modifier.padding(16.dp).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Checkout", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+        Text("Secure checkout", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+        Text("Review delivery, items and payment before placing your order.", style = MaterialTheme.typography.bodyMedium)
         if (state.loading) CircularProgressIndicator()
         if (state.error != null) Text(state.error, color = MaterialTheme.colorScheme.error)
-
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Order summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                for (line in lines) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("${line.mealName} × ${line.quantity}")
-                        Text("₹${line.lineTotal.toInt()}")
-                    }
-                }
-                SummaryRow("Subtotal", subtotal)
-                if (discount > 0) SummaryRow("Coupon discount", -discount)
-                SummaryRow("Payable total", total, bold = true)
-            }
+        if (lines.isEmpty()) {
+            Card(Modifier.fillMaxWidth()) { Text("Your cart is empty. Add at least one meal before checkout.", Modifier.padding(16.dp)) }
         }
 
-        Text("Delivery location", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        CheckoutSectionTitle("1", "Delivery address")
         when {
             addressesLoading -> CircularProgressIndicator()
             address == null -> {
@@ -87,56 +79,93 @@ fun CheckoutScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("${address.label}${if (address.isDefault) " · Default" else ""}", fontWeight = FontWeight.Bold)
                     Text("${address.line1}, ${address.city} - ${address.pincode}")
-                    if (address.latitude != null && address.longitude != null) {
-                        Text("Location updated", color = MaterialTheme.colorScheme.primary)
-                    }
-                    Button(onClick = { locationConfirmed = true }, enabled = !locationConfirmed, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (locationConfirmed) "Location confirmed" else "Confirm delivery location")
+                    Text(if (address.latitude != null && address.longitude != null) "GPS location attached" else "GPS location not attached", color = if (address.latitude != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                    Button(onClick = { locationConfirmed = true }, enabled = locationReady && !locationConfirmed, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (locationConfirmed) "Location confirmed" else if (locationReady) "Confirm delivery location" else "GPS location required")
                     }
                     OutlinedButton(onClick = onManageAddress, modifier = Modifier.fillMaxWidth()) { Text("Change address") }
                 }
             }
         }
 
-        Text("Coupon", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        OutlinedTextField(
-            value = state.couponCode,
-            onValueChange = onCouponCode,
-            label = { Text("Coupon code") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedButton(onClick = onApplyCoupon, enabled = state.couponCode != "") { Text("Apply") }
-        if (coupon != null) {
-            val description = if (coupon.description == null) "" else ": ${coupon.description}"
-            Text("${coupon.code} applied$description")
+        CheckoutSectionTitle("2", "Delivery meal slot")
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(12.dp)) {
+                Text("Delivery date: Today", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 12.dp, bottom = 4.dp))
+                PaymentOption("Breakfast", "breakfast", state.mealType, onMealType)
+                PaymentOption("Lunch", "lunch", state.mealType, onMealType)
+                PaymentOption("Dinner", "dinner", state.mealType, onMealType)
+            }
         }
 
-        Text("Payment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Text("Meal time", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        PaymentOption("Breakfast", "breakfast", state.mealType, onMealType)
-        PaymentOption("Lunch", "lunch", state.mealType, onMealType)
-        PaymentOption("Dinner", "dinner", state.mealType, onMealType)
-        PaymentOption("Pay securely online", PaymentChoice.Online, state.paymentChoice, onPaymentChoice)
-        PaymentOption(
-            "BTS Wallet · ₹${state.wallet?.balance?.toInt() ?: 0}",
-            PaymentChoice.Wallet,
-            state.paymentChoice,
-            onPaymentChoice,
-        )
+        CheckoutSectionTitle("3", "Order summary")
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                for (line in lines) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column(Modifier.weight(1f)) {
+                            Text(line.mealName, fontWeight = FontWeight.SemiBold)
+                            Text("Quantity: ${line.quantity}${if (line.addOns.isNotEmpty()) " · ${line.addOns.size} add-ons" else ""}", style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text("₹${line.lineTotal.toInt()}")
+                    }
+                }
+                HorizontalDivider()
+                SummaryRow("Item total", subtotal)
+                if (discount > 0) SummaryRow("Coupon discount", -discount)
+                SummaryRow("Delivery fee", 0.0, valueLabel = "FREE")
+                HorizontalDivider()
+                SummaryRow("Amount payable", total, bold = true)
+            }
+        }
+
+        CheckoutSectionTitle("4", "Offers and coupon")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = state.couponCode,
+                onValueChange = onCouponCode,
+                label = { Text("Coupon code") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            OutlinedButton(onClick = onApplyCoupon, enabled = state.couponCode.isNotBlank()) { Text("Apply") }
+        }
+        if (coupon != null) Text("${coupon.code} applied${coupon.description?.let { ": $it" }.orEmpty()}", color = MaterialTheme.colorScheme.primary)
+
+        CheckoutSectionTitle("5", "Payment method")
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(12.dp)) {
+                PaymentOption("Razorpay · UPI, cards and netbanking", PaymentChoice.Online, state.paymentChoice, onPaymentChoice)
+                PaymentOption("BTS Wallet · ₹${state.wallet?.balance?.toInt() ?: 0}", PaymentChoice.Wallet, state.paymentChoice, onPaymentChoice)
+            }
+        }
 
         val activity = androidx.compose.ui.platform.LocalContext.current as Activity
         val walletReady = state.paymentChoice != PaymentChoice.Wallet || (state.wallet?.balance ?: 0.0) >= total
-        Button(onClick = { onPay(activity) }, enabled = !state.loading && lines.isNotEmpty() && walletReady && address != null && locationConfirmed, modifier = Modifier.fillMaxWidth()) {
-            Text("Pay ₹${total.toInt()}")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = termsAccepted, onCheckedChange = { termsAccepted = it })
+            Text("I confirm the order, delivery location and payable amount.", style = MaterialTheme.typography.bodySmall)
         }
-        if (address != null && !locationConfirmed) Text("Confirm delivery location to continue.", color = MaterialTheme.colorScheme.error)
+        Button(
+            onClick = { onPay(activity) },
+            enabled = !state.loading && lines.isNotEmpty() && walletReady && address != null && locationReady && locationConfirmed && termsAccepted,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Place order · Pay ₹${total.toInt()}")
+        }
+        if (address != null && !locationReady) Text("Attach GPS coordinates to the selected address before checkout.", color = MaterialTheme.colorScheme.error)
+        if (locationReady && !locationConfirmed) Text("Confirm delivery location to continue.", color = MaterialTheme.colorScheme.error)
         if (state.paymentChoice == PaymentChoice.Wallet && !walletReady) Text("Insufficient wallet balance", color = MaterialTheme.colorScheme.error)
         Text(
             "Secure payment is created and verified by the BTS server. No Razorpay secret is stored in this app.",
             style = MaterialTheme.typography.bodySmall,
         )
     }
+}
+
+@Composable
+private fun CheckoutSectionTitle(number: String, title: String) {
+    Text("$number. $title", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 }
 
 @Composable
@@ -156,9 +185,9 @@ private fun PaymentOption(label: String, value: String, selected: String, onSele
 }
 
 @Composable
-private fun SummaryRow(label: String, value: Double, bold: Boolean = false) {
+private fun SummaryRow(label: String, value: Double, bold: Boolean = false, valueLabel: String? = null) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
-        Text("₹${value.toInt()}", fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
+        Text(valueLabel ?: "₹${value.toInt()}", fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
     }
 }

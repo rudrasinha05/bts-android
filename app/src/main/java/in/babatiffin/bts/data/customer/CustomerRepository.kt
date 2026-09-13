@@ -38,6 +38,24 @@ import kotlinx.serialization.Serializable
     val state: String,
     val pincode: String,
     @SerialName("is_default") val isDefault: Boolean,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+)
+
+data class DeliveryAddressDraft(
+    val name: String,
+    val phone: String,
+    val label: String,
+    val house: String,
+    val building: String,
+    val floor: String,
+    val locality: String,
+    val landmark: String,
+    val district: String,
+    val state: String,
+    val pincode: String,
+    val latitude: Double,
+    val longitude: Double,
 )
 
 @Serializable data class NutritionProfile(

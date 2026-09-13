@@ -48,6 +48,7 @@ import com.babatiffin.bts.feature.checkout.CheckoutScreen
 import com.babatiffin.bts.feature.checkout.CheckoutViewModel
 import com.babatiffin.bts.data.customer.SupabaseCustomerRepository
 import com.babatiffin.bts.feature.customer.CustomerViewModel
+import com.babatiffin.bts.feature.customer.AddAddressScreen
 import com.babatiffin.bts.feature.customer.NutritionScreen
 import com.babatiffin.bts.feature.customer.ProfileScreen
 import com.babatiffin.bts.feature.customer.SupportScreen
@@ -74,6 +75,7 @@ private val authRequiredRoutes = setOf(
     BtsDestination.Profile.route,
     BtsDestination.Support.route,
     BtsDestination.Checkout.route,
+    BtsDestination.AddAddress.route,
     BtsDestination.Notifications.route,
     BtsDestination.Referrals.route,
     BtsDestination.Kitchen.route,
@@ -319,8 +321,15 @@ fun BtsNavGraph(
                     onMealType = checkoutViewModel::chooseMealType,
                     address = deliveryAddress,
                     addressesLoading = customerState.loading,
-                    onManageAddress = { navigate(BtsDestination.Profile.route) },
+                    onManageAddress = { navigate(BtsDestination.AddAddress.route) },
                     onPay = { activity -> checkoutViewModel.pay(activity, cartLines) },
+                )
+            }
+            composable(BtsDestination.AddAddress.route) {
+                AddAddressScreen(
+                    state = customerState,
+                    onSave = customerViewModel::addDeliveryAddress,
+                    onSaved = { navController.popBackStack() },
                 )
             }
             composable(BtsDestination.Auth.route) {

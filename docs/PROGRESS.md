@@ -117,6 +117,7 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Version-controlled `create-payment-order` and `verify-payment` Edge Functions now implement authenticated server pricing, coupon checks, Razorpay order creation, signature verification and capture against existing tables.
 - Edge Function deployment and Android Razorpay callback wiring remain pending live validation.
 - Wallet checkout uses an authenticated server function with a compare-and-set balance debit, payment record and wallet ledger entry against the existing tables.
+- Checkout's delivery-address action now opens a dedicated GPS flow: permission prompt, current-location map pin, complete recipient/address form, and save-back to checkout using the existing `profiles` and `addresses` tables.
 - No schema, table, migration, RLS policy or production data change is part of M9.
 
 ## M10 implementation started
@@ -163,3 +164,4 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Menu includes a bottom-right floating category action for meal-time and food-preference filtering.
 - Plans are consolidated into the single Subscription destination; the duplicate Plans route and drawer entry were removed.
 - Subscription plans are organized into horizontal Weekly, Monthly, Quarterly and Yearly rails; unavailable cycles render an explicit empty state instead of fabricated pricing.
+- Checkout follows a five-section production flow: confirmed address, delivery meal slot, itemized order summary, coupon, and payment method, with final customer confirmation before Pay is enabled.

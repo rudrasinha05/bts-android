@@ -271,6 +271,8 @@ private fun routeTitle(route: String?): String = when (route) {
     BtsDestination.Inventory.route -> "Inventory"
     BtsDestination.Delivery.route -> "Delivery"
     BtsDestination.Cart.route -> "Cart"
+    BtsDestination.Checkout.route -> "Checkout"
+    BtsDestination.AddAddress.route -> "Delivery address"
     BtsDestination.Auth.route -> "Login"
     BtsDestination.Notifications.route -> "Notifications"
     BtsDestination.Referrals.route -> "Refer & earn"
