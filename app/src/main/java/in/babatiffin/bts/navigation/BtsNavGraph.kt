@@ -303,6 +303,11 @@ fun BtsNavGraph(
                     onAddNewAddress = { navigate(BtsDestination.AddAddress.route) },
                     onDefault = customerViewModel::setDefault,
                     onDelete = customerViewModel::deleteAddress,
+                    onOrders = { navigate(BtsDestination.Orders.route) },
+                    onSubscription = { navigate(BtsDestination.Subscription.route) },
+                    onNutrition = { navigate(BtsDestination.Nutrition.route) },
+                    onReferrals = { navigate(BtsDestination.Referrals.route) },
+                    onSupport = { navigate(BtsDestination.Support.route) },
                     onSignOut = authViewModel::signOut,
                 )
             }
