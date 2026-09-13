@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import com.babatiffin.bts.core.ui.BtsAppShell
 import com.babatiffin.bts.feature.common.PlaceholderScreen
 import com.babatiffin.bts.feature.home.HomeScreen
+import com.babatiffin.bts.feature.dashboard.DashboardScreen
 import com.babatiffin.bts.feature.menu.MenuScreen
 import com.babatiffin.bts.feature.menu.MealDiscoveryViewModel
 import com.babatiffin.bts.feature.menu.MealDetailScreen
@@ -254,7 +255,20 @@ fun BtsNavGraph(
                 )
             }
             composable(BtsDestination.Dashboard.route) {
-                PlaceholderScreen("Dashboard", "Customer dashboard shell is ready for backend-driven widgets.")
+                DashboardScreen(
+                    orders = ordersState,
+                    subscriptions = subscriptionState,
+                    customer = customerState,
+                    meals = mealState.meals,
+                    onBuildMeal = { navigate(BtsDestination.BuildMeal.route) },
+                    onOrders = { navigate(BtsDestination.Orders.route) },
+                    onPlans = { navigate(BtsDestination.Subscription.route) },
+                    onNutrition = { navigate(BtsDestination.Nutrition.route) },
+                    onMeal = { id ->
+                        mealViewModel.selectMeal(id)
+                        navController.navigate(BtsDestination.MealDetail.createRoute(id))
+                    },
+                )
             }
             composable(BtsDestination.BuildMeal.route) {
                 LaunchedEffect(Unit) { mealViewModel.startBuilder() }

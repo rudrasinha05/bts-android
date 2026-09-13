@@ -11,6 +11,8 @@ data class Order(
     @SerialName("user_id") val userId: String,
     @SerialName("order_number") val orderNumber: String,
     val status: String,
+    @SerialName("scheduled_date") val scheduledDate: String = "",
+    @SerialName("meal_type") val mealType: String? = null,
     val subtotal: Double,
     val discount: Double = 0.0,
     val total: Double,

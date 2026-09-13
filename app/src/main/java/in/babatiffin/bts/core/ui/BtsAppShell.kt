@@ -61,13 +61,13 @@ private data class ShellItem(
 private val primaryItems = listOf(
     ShellItem(BtsDestination.Home.route, "Home", Icons.Default.Home),
     ShellItem(BtsDestination.Menu.route, "Menu", Icons.Default.RestaurantMenu),
-    ShellItem(BtsDestination.BuildMeal.route, "Build", Icons.Default.Build),
+    ShellItem(BtsDestination.Dashboard.route, "Dashboard", Icons.Default.Dashboard),
     ShellItem(BtsDestination.Orders.route, "Orders", Icons.Default.ReceiptLong),
     ShellItem(BtsDestination.Profile.route, "You", Icons.Default.AccountCircle),
 )
 
 private val drawerItems = listOf(
-    ShellItem(BtsDestination.Dashboard.route, "Dashboard", Icons.Default.Dashboard),
+    ShellItem(BtsDestination.BuildMeal.route, "Build Meal", Icons.Default.Build),
     ShellItem(BtsDestination.Subscription.route, "Subscription", Icons.Default.ReceiptLong),
     ShellItem(BtsDestination.Nutrition.route, "Nutrition", Icons.Default.RestaurantMenu),
     ShellItem(BtsDestination.Support.route, "Support", Icons.Default.SupportAgent),
