@@ -91,7 +91,11 @@ fun CheckoutScreen(
         CheckoutSectionTitle("2", "Delivery meal slot")
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp)) {
-                Text("Delivery date: Today", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 12.dp, bottom = 4.dp))
+                Text(
+                    "Delivery date: Today",
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp),
+                )
                 PaymentOption("Breakfast", "breakfast", state.mealType, onMealType)
                 PaymentOption("Lunch", "lunch", state.mealType, onMealType)
                 PaymentOption("Dinner", "dinner", state.mealType, onMealType)
