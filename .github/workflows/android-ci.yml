@@ -27,6 +27,9 @@ jobs:
       - name: Assemble debug APK
         run: gradle :app:assembleDebug --stacktrace
 
+      - name: Assemble release APK
+        run: gradle :app:assembleRelease --stacktrace
+
       - name: Run unit tests
         run: gradle :app:testDebugUnitTest --stacktrace
 
