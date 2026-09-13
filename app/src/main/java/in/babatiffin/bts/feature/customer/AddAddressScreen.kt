@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.webkit.WebView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +23,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,7 +37,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.babatiffin.bts.R
 import com.babatiffin.bts.data.customer.DeliveryAddressDraft
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -154,14 +160,41 @@ private fun AddressField(label: String, value: String, keyboardType: KeyboardTyp
     )
 }
 
-@SuppressLint("SetJavaScriptEnabled")
 @Composable
 private fun LocationMap(latitude: Double, longitude: Double) {
-    val delta = 0.008
-    val url = "https://www.openstreetmap.org/export/embed.html?bbox=${longitude - delta}%2C${latitude - delta}%2C${longitude + delta}%2C${latitude + delta}&layer=mapnik&marker=$latitude%2C$longitude"
+    val context = LocalContext.current
+    val mapView = remember(context) {
+        Configuration.getInstance().userAgentValue = context.packageName
+        MapView(context).apply {
+            setTileSource(TileSourceFactory.MAPNIK)
+            setMultiTouchControls(true)
+            setBuiltInZoomControls(false)
+            controller.setZoom(17.0)
+        }
+    }
+    DisposableEffect(mapView) {
+        mapView.onResume()
+        onDispose {
+            mapView.onPause()
+            mapView.onDetach()
+        }
+    }
     AndroidView(
-        factory = { context -> WebView(context).apply { settings.javaScriptEnabled = true; loadUrl(url) } },
-        update = { if (it.url != url) it.loadUrl(url) },
+        factory = { mapView },
+        update = { map ->
+            val point = GeoPoint(latitude, longitude)
+            map.controller.setCenter(point)
+            map.overlays.clear()
+            map.overlays.add(
+                Marker(map).apply {
+                    position = point
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    icon = ContextCompat.getDrawable(context, R.drawable.ic_location_pin_blue)
+                    title = "Current delivery location"
+                },
+            )
+            map.invalidate()
+        },
         modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(16.dp)),
     )
 }

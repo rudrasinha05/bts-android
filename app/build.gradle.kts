@@ -97,6 +97,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.5")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
 
     implementation(platform("io.github.jan-tennert.supabase:bom:3.8.0"))
     implementation("io.github.jan-tennert.supabase:auth-kt")
