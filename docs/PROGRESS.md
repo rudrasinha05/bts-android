@@ -118,6 +118,7 @@ Do not start M2 until these M1 exit criteria are satisfied.
 - Edge Function deployment and Android Razorpay callback wiring remain pending live validation.
 - Wallet checkout uses an authenticated server function with a compare-and-set balance debit, payment record and wallet ledger entry against the existing tables.
 - Checkout's delivery-address action now opens a dedicated GPS flow: permission prompt, current-location map pin, complete recipient/address form, and save-back to checkout using the existing `profiles` and `addresses` tables.
+- Profile uses the same dedicated address flow; saved addresses are organized in one dropdown with default and removal controls instead of a duplicate inline form.
 - No schema, table, migration, RLS policy or production data change is part of M9.
 
 ## M10 implementation started

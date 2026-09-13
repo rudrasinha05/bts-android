@@ -297,7 +297,14 @@ fun BtsNavGraph(
                 NutritionScreen(customerState, mealState.meals.associate { it.id to it.name }, customerViewModel::saveNutrition)
             }
             composable(BtsDestination.Profile.route) {
-                ProfileScreen(customerState, customerViewModel::saveProfile, customerViewModel::addAddress, customerViewModel::setDefault, customerViewModel::deleteAddress, customerViewModel::updateLocation, authViewModel::signOut)
+                ProfileScreen(
+                    state = customerState,
+                    onSave = customerViewModel::saveProfile,
+                    onAddNewAddress = { navigate(BtsDestination.AddAddress.route) },
+                    onDefault = customerViewModel::setDefault,
+                    onDelete = customerViewModel::deleteAddress,
+                    onSignOut = authViewModel::signOut,
+                )
             }
             composable(BtsDestination.Support.route) {
                 SupportScreen(customerState, customerViewModel::createTicket)
