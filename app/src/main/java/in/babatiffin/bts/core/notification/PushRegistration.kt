@@ -7,8 +7,10 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import android.os.Handler
-import android.os.Looper
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 object PushRegistration {
     fun registerSignedInUser(context: Context, userId: String) {
@@ -27,13 +29,21 @@ object PushRegistration {
             onComplete()
             return
         }
-        FirebaseMessaging.getInstance().token
-            .addOnSuccessListener { token ->
-                CoroutineScope(Dispatchers.IO).launch {
-                    runCatching { PushTokenRepository(client).unregister(userId, token) }
-                    Handler(Looper.getMainLooper()).post { onComplete() }
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                withTimeoutOrNull(5_000L) {
+                    val token = suspendCancellableCoroutine<String> { continuation ->
+                        FirebaseMessaging.getInstance().token
+                            .addOnSuccessListener { if (continuation.isActive) continuation.resume(it) }
+                            .addOnFailureListener { if (continuation.isActive) continuation.resumeWithException(it) }
+                    }
+                    PushTokenRepository(client).unregister(userId, token)
                 }
+            } catch (_: Exception) {
+                // Token cleanup is best-effort; it must not block session sign-out.
+            } finally {
+                onComplete()
             }
-            .addOnFailureListener { onComplete() }
+        }
     }
 }

@@ -1,6 +1,10 @@
 package com.babatiffin.bts.domain
 
 object AppRules {
+    fun hasValidCoordinates(latitude: Double?, longitude: Double?): Boolean =
+        latitude != null && longitude != null && latitude.isFinite() && longitude.isFinite() &&
+            latitude in -90.0..90.0 && longitude in -180.0..180.0
+
     fun mealCategoryForHour(hour: Int): String {
         require(hour in 0..23)
         return when (hour) {

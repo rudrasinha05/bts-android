@@ -45,13 +45,13 @@ fun CheckoutScreen(
     onPay: (Activity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var locationConfirmed by remember(address?.id) { mutableStateOf(false) }
-    var termsAccepted by remember { mutableStateOf(false) }
+    var locationConfirmed by remember(address) { mutableStateOf(false) }
     val subtotal = lines.sumOf(CartLine::lineTotal)
     val coupon = state.appliedCoupon
     val discount = AppRules.discount(subtotal, coupon?.discountAmount, coupon?.discountPercent)
     val total = subtotal - discount
-    val locationReady = address?.latitude != null && address.longitude != null
+    var termsAccepted by remember(address, lines, total, state.mealType, state.paymentChoice) { mutableStateOf(false) }
+    val locationReady = AppRules.hasValidCoordinates(address?.latitude, address?.longitude)
 
     Column(
         modifier = modifier.padding(16.dp).verticalScroll(rememberScrollState()),

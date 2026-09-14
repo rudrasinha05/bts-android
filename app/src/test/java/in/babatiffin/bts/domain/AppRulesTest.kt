@@ -6,6 +6,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AppRulesTest {
+    @Test fun coordinatesRejectMissingNonFiniteAndOutOfRangeValues() {
+        assertFalse(AppRules.hasValidCoordinates(null, 77.0))
+        assertFalse(AppRules.hasValidCoordinates(28.0, null))
+        assertFalse(AppRules.hasValidCoordinates(Double.NaN, 77.0))
+        assertFalse(AppRules.hasValidCoordinates(28.0, Double.POSITIVE_INFINITY))
+        assertFalse(AppRules.hasValidCoordinates(91.0, 77.0))
+        assertFalse(AppRules.hasValidCoordinates(28.0, -181.0))
+        assertTrue(AppRules.hasValidCoordinates(28.47, 77.50))
+        assertTrue(AppRules.hasValidCoordinates(0.0, 0.0))
+        assertTrue(AppRules.hasValidCoordinates(-90.0, 180.0))
+    }
+
     @Test fun breakfastWindowIncludesBoundaries() {
         assertEquals("breakfast", AppRules.mealCategoryForHour(5))
         assertEquals("breakfast", AppRules.mealCategoryForHour(10))
