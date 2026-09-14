@@ -41,10 +41,11 @@ fun MenuScreen(
     onRetry: () -> Unit,
     onOpenMeal: (String) -> Unit,
     onAddMeal: (Meal) -> Unit,
+    onAddAddOn: (Meal) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var foodGroup by rememberSaveable { mutableStateOf("all") }
-    val visibleMeals = state.visibleMeals.filter { it.matchesMenuFoodGroup(foodGroup) }
+    val visibleMeals = state.menuItemsForGroup(foodGroup)
 
     Box(modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
@@ -60,7 +61,7 @@ fun MenuScreen(
                 FilterChip(
                     selected = true,
                     onClick = { foodGroup = "all" },
-                    label = { Text((selectedGroup?.title ?: "Category") + " ×") },
+                    label = { Text((selectedGroup?.title ?: if (foodGroup == "addons") "Add-ons" else "Other meals") + " ×") },
                 )
             }
             Row(
@@ -100,7 +101,7 @@ fun MenuScreen(
                 ) {
                     items(visibleMeals.size) { index ->
                         val meal = visibleMeals[index]
-                        Card(onClick = { onOpenMeal(meal.id) }, modifier = Modifier.fillMaxWidth()) {
+                        Card(onClick = { if (foodGroup == "addons") onAddAddOn(meal) else onOpenMeal(meal.id) }, modifier = Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 MealImage(meal, Modifier.fillMaxWidth().height(180.dp))
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -112,7 +113,7 @@ fun MenuScreen(
                                     "${meal.category.replaceFirstChar(Char::uppercase)} • ${meal.foodType.replaceFirstChar(Char::uppercase)}",
                                     style = MaterialTheme.typography.labelMedium,
                                 )
-                                Button(onClick = { onAddMeal(meal) }, modifier = Modifier.fillMaxWidth()) { Text("Add") }
+                                Button(onClick = { if (foodGroup == "addons") onAddAddOn(meal) else onAddMeal(meal) }, modifier = Modifier.fillMaxWidth()) { Text(if (foodGroup == "addons") "Add to a meal" else "Add") }
                             }
                         }
                     }
@@ -132,6 +133,13 @@ fun MenuScreen(
             title = { Text("Browse food categories") },
             text = {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        OutlinedButton(
+                            onClick = { foodGroup = "addons"; onShowCategories(false) },
+                            enabled = state.addOns.isNotEmpty(),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Add-ons (${state.addOns.size})") }
+                    }
                     item { Text("Dish categories", fontWeight = FontWeight.Bold) }
                     items(menuFoodGroups.size) { index ->
                         val group = menuFoodGroups[index]

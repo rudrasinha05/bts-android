@@ -115,6 +115,7 @@ fun BtsNavGraph(
     })
     val mealState by mealViewModel.state.collectAsState()
     var showMenuCategories by rememberSaveable { mutableStateOf(false) }
+    var pendingAddOnId by rememberSaveable { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val cartViewModel: CartViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -256,6 +257,7 @@ fun BtsNavGraph(
                     state = mealState,
                     showCategories = showMenuCategories,
                     onShowCategories = { showMenuCategories = it },
+                    onAddAddOn = { pendingAddOnId = it.id },
                     onCategory = mealViewModel::selectCategory,
                     onFoodType = mealViewModel::selectFoodType,
                     onRetry = mealViewModel::refresh,
@@ -418,6 +420,35 @@ fun BtsNavGraph(
             composable(BtsDestination.Packing.route) { if(authState.roles.canAccessKitchenOperations())PackingScreen(operationsState,{operationsViewModel.load(authState.roles)},operationsViewModel::packing)else PlaceholderScreen("Restricted","Packing access requires an operations role.") }
             composable(BtsDestination.Inventory.route) { if(authState.roles.canAccessKitchenOperations())InventoryScreen(operationsState){operationsViewModel.load(authState.roles)}else PlaceholderScreen("Restricted","Inventory access requires an operations role.") }
             composable(BtsDestination.Delivery.route) { if(authState.roles.canAccessDeliveryOperations())DeliveryScreen(operationsState,{operationsViewModel.load(authState.roles)},operationsViewModel::delivery)else PlaceholderScreen("Restricted","Delivery access requires an operations role.") }
+        }
+        val pendingAddOn = mealState.addOns.firstOrNull { it.id == pendingAddOnId }
+        if (pendingAddOn != null) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { pendingAddOnId = null },
+                title = { androidx.compose.material3.Text("Add ${pendingAddOn.name}") },
+                text = {
+                    androidx.compose.foundation.lazy.LazyColumn {
+                        if (cartLines.isEmpty()) {
+                            item { androidx.compose.material3.Text("Add a meal to your cart first, then choose its extras.") }
+                        }
+                        items(cartLines.size) { index ->
+                            val line = cartLines[index]
+                            androidx.compose.material3.TextButton(onClick = {
+                                val quantity = line.addOns.firstOrNull { it.id == pendingAddOn.id }?.quantity ?: 0
+                                cartViewModel.changeAddOn(line.id, pendingAddOn, quantity, 1)
+                                pendingAddOnId = null
+                                navigate(BtsDestination.Cart.route)
+                            }) { androidx.compose.material3.Text("${line.mealName} · Qty ${line.quantity}") }
+                        }
+                    }
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        pendingAddOnId = null
+                        if (cartLines.isEmpty()) showMenuCategories = true
+                    }) { androidx.compose.material3.Text(if (cartLines.isEmpty()) "Choose a meal" else "Cancel") }
+                },
+            )
         }
         val quickAddMeal = mealState.meals.firstOrNull { it.id == quickAddMealId }
         val quickAddLine = cartLines.firstOrNull { it.id == quickAddLineId }

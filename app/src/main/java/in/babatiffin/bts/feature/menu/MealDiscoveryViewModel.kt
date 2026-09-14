@@ -71,3 +71,8 @@ class MealDiscoveryViewModel(private val repository: MealRepository?) : ViewMode
         }
     }
 }
+
+/** Extras are attached to cart meals and are not filtered by a base meal's time slot. */
+fun MealDiscoveryState.menuItemsForGroup(group: String): List<Meal> =
+    if (group == "addons") addOns.distinctBy { it.id }
+    else visibleMeals.filter { it.matchesMenuFoodGroup(group) }
