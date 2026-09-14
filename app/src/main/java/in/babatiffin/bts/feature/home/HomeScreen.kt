@@ -36,6 +36,7 @@ import com.babatiffin.bts.data.menu.Meal
 import com.babatiffin.bts.feature.menu.MealImage
 import kotlinx.coroutines.delay
 import java.util.Calendar
+import com.babatiffin.bts.domain.AppRules
 
 @Composable
 fun HomeScreen(
@@ -169,8 +170,4 @@ private fun homeRails(meals: List<Meal>): List<Pair<String, List<Meal>>> {
     ).filter { it.second.isNotEmpty() }
 }
 
-private fun currentMealCategory(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-    in 5..10 -> "breakfast"
-    in 11..16 -> "lunch"
-    else -> "dinner"
-}
+private fun currentMealCategory(): String = AppRules.mealCategoryForHour(Calendar.getInstance().get(Calendar.HOUR_OF_DAY))

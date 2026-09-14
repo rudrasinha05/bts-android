@@ -22,6 +22,10 @@ import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.ContactSupport
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -35,6 +39,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
@@ -66,7 +71,15 @@ private val primaryItems = listOf(
     ShellItem(BtsDestination.Profile.route, "You", Icons.Default.AccountCircle),
 )
 
-private val drawerItems = listOf(
+private val publicDrawerItems = listOf(
+    ShellItem(BtsDestination.HowItWorks.route, "How it works", Icons.Default.Info),
+    ShellItem(BtsDestination.About.route, "About", Icons.Default.Info),
+    ShellItem(BtsDestination.NutritionGuide.route, "Nutrition guide", Icons.Default.RestaurantMenu),
+    ShellItem(BtsDestination.Faq.route, "FAQ", Icons.Default.Help),
+    ShellItem(BtsDestination.Contact.route, "Contact", Icons.Default.ContactSupport),
+)
+
+private val accountDrawerItems = listOf(
     ShellItem(BtsDestination.BuildMeal.route, "Build Meal", Icons.Default.Build),
     ShellItem(BtsDestination.Subscription.route, "Subscription", Icons.Default.ReceiptLong),
     ShellItem(BtsDestination.Nutrition.route, "Nutrition", Icons.Default.RestaurantMenu),
@@ -111,7 +124,7 @@ fun BtsAppShell(
                     Divider()
                     Spacer(Modifier.height(BtsSpacing.Sm))
                     val operations=buildList{if(roles.canAccessKitchenOperations())addAll(kitchenItems);if(roles.canAccessDeliveryOperations())addAll(deliveryItems)}
-                    (drawerItems+operations).forEach { item ->
+                    (publicDrawerItems + accountDrawerItems + operations).forEach { item ->
                         NavigationDrawerItem(
                             label = { Text(item.label) },
                             selected = currentRoute == item.route,
@@ -144,7 +157,13 @@ fun BtsAppShell(
                             onOpenCart = { onNavigate(BtsDestination.Cart.route) },
                             onOpenNotifications = { onNavigate(BtsDestination.Notifications.route) },
                             onOpenAccount = { onNavigate(if (isAuthenticated) BtsDestination.Profile.route else BtsDestination.Auth.route) },
+                            onSearch = { onNavigate(BtsDestination.Menu.route) },
                         )
+                    },
+                    floatingActionButton = {
+                        if (currentRoute != BtsDestination.Menu.route) {
+                            FloatingActionButton(onClick = { onNavigate(BtsDestination.Menu.route) }) { Text("Menu") }
+                        }
                     },
                     content = content,
                 )
@@ -160,7 +179,13 @@ fun BtsAppShell(
                         onOpenCart = { onNavigate(BtsDestination.Cart.route) },
                         onOpenNotifications = { onNavigate(BtsDestination.Notifications.route) },
                         onOpenAccount = { onNavigate(if (isAuthenticated) BtsDestination.Profile.route else BtsDestination.Auth.route) },
+                        onSearch = { onNavigate(BtsDestination.Menu.route) },
                     )
+                },
+                floatingActionButton = {
+                    if (currentRoute != BtsDestination.Menu.route) {
+                        FloatingActionButton(onClick = { onNavigate(BtsDestination.Menu.route) }) { Text("Menu") }
+                    }
                 },
                 bottomBar = {
                     NavigationBar(modifier = Modifier.height(BtsSize.BottomBarHeight)) {
@@ -213,6 +238,7 @@ private fun BtsTopBar(
     onOpenCart: () -> Unit,
     onOpenNotifications: () -> Unit,
     onOpenAccount: () -> Unit,
+    onSearch: () -> Unit,
 ) {
     Surface(shadowElevation = 2.dp) {
         Row(
@@ -237,6 +263,9 @@ private fun BtsTopBar(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            IconButton(onClick = onSearch) {
+                Icon(Icons.Default.Search, contentDescription = "Search menu")
+            }
             IconButton(onClick = onToggleTheme) {
                 Icon(
                     imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
@@ -259,6 +288,11 @@ private fun BtsTopBar(
 private fun routeTitle(route: String?): String = when (route) {
     BtsDestination.Home.route -> "Home"
     BtsDestination.Menu.route -> "Menu"
+    BtsDestination.HowItWorks.route -> "How it works"
+    BtsDestination.About.route -> "About"
+    BtsDestination.NutritionGuide.route -> "Nutrition"
+    BtsDestination.Faq.route -> "FAQ"
+    BtsDestination.Contact.route -> "Contact"
     BtsDestination.Dashboard.route -> "Dashboard"
     BtsDestination.BuildMeal.route -> "Build Meal"
     BtsDestination.Subscription.route -> "Subscription"
@@ -272,6 +306,7 @@ private fun routeTitle(route: String?): String = when (route) {
     BtsDestination.Delivery.route -> "Delivery"
     BtsDestination.Cart.route -> "Cart"
     BtsDestination.Checkout.route -> "Checkout"
+    BtsDestination.OrderConfirmation.route -> "Order confirmed"
     BtsDestination.AddAddress.route -> "Delivery address"
     BtsDestination.Auth.route -> "Login"
     BtsDestination.Notifications.route -> "Notifications"

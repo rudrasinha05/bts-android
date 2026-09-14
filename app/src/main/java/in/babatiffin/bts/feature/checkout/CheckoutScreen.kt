@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.babatiffin.bts.domain.AppRules
 
 @Composable
 fun CheckoutScreen(
@@ -48,11 +49,7 @@ fun CheckoutScreen(
     var termsAccepted by remember { mutableStateOf(false) }
     val subtotal = lines.sumOf(CartLine::lineTotal)
     val coupon = state.appliedCoupon
-    val amountDiscount = coupon?.discountAmount ?: 0.0
-    val percentDiscount = subtotal * (coupon?.discountPercent ?: 0.0) / 100.0
-    var discount = if (amountDiscount > percentDiscount) amountDiscount else percentDiscount
-    if (discount < 0.0) discount = 0.0
-    if (discount > subtotal) discount = subtotal
+    val discount = AppRules.discount(subtotal, coupon?.discountAmount, coupon?.discountPercent)
     val total = subtotal - discount
     val locationReady = address?.latitude != null && address.longitude != null
 
@@ -152,7 +149,7 @@ fun CheckoutScreen(
         }
         Button(
             onClick = { onPay(activity) },
-            enabled = !state.loading && lines.isNotEmpty() && walletReady && address != null && locationReady && locationConfirmed && termsAccepted,
+            enabled = walletReady && AppRules.isCheckoutReady(lines.isNotEmpty(), address != null, locationReady, locationConfirmed, termsAccepted, state.loading),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Place order · Pay ₹${total.toInt()}")

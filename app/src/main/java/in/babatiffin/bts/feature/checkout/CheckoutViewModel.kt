@@ -18,6 +18,7 @@ import com.babatiffin.bts.data.checkout.PaymentOrderRequest
 import com.babatiffin.bts.data.checkout.PaymentVerification
 import com.razorpay.Checkout
 import org.json.JSONObject
+import com.babatiffin.bts.domain.AppRules
 
 enum class PaymentChoice { Online, Wallet }
 
@@ -31,6 +32,7 @@ data class CheckoutState(
     val paymentChoice: PaymentChoice = PaymentChoice.Online,
     val mealType: String = "lunch",
     val paymentComplete: Boolean = false,
+    val completedOrderId: String? = null,
     val error: String? = null,
 )
 
@@ -93,7 +95,7 @@ class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel
                 val request = PaymentOrderRequest(items, _state.value.appliedCoupon?.code, _state.value.mealType)
                 if (_state.value.paymentChoice == PaymentChoice.Wallet) {
                     val result = repository.payWithWallet(request)
-                    _state.value = _state.value.copy(loading = false, paymentComplete = result.verified, wallet = _state.value.wallet?.copy(balance = result.balance))
+                    _state.value = _state.value.copy(loading = false, paymentComplete = result.verified, completedOrderId = result.orderId, wallet = _state.value.wallet?.copy(balance = result.balance))
                     null
                 } else repository.createPaymentOrder(request)
             }.onSuccess { order ->
@@ -114,15 +116,14 @@ class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel
     private suspend fun verify(result: RazorpayResult.Success) {
         _state.value = _state.value.copy(loading = true, error = null)
         runCatching { repository?.verifyPayment(PaymentVerification(result.orderId, result.paymentId, result.signature)) }
-            .onSuccess { _state.value = _state.value.copy(loading = false, paymentComplete = it?.verified == true) }
+            .onSuccess { _state.value = _state.value.copy(loading = false, paymentComplete = it?.verified == true, completedOrderId = it?.orderId) }
             .onFailure { _state.value = _state.value.copy(loading = false, error = "Payment received but verification is pending. Do not pay again; check Orders.") }
     }
 
-    fun consumeCompletion() { _state.value = _state.value.copy(paymentComplete = false) }
+    fun consumeCompletion() { _state.value = _state.value.copy(paymentComplete = false, completedOrderId = null) }
 
     fun discount(subtotal: Double): Double {
         val coupon = _state.value.appliedCoupon ?: return 0.0
-        val percentage = coupon.discountPercent?.let { subtotal * it / 100.0 } ?: 0.0
-        return maxOf(coupon.discountAmount ?: 0.0, percentage).coerceIn(0.0, subtotal)
+        return AppRules.discount(subtotal, coupon.discountAmount, coupon.discountPercent)
     }
 }

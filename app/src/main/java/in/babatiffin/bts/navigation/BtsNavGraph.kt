@@ -67,6 +67,12 @@ import com.babatiffin.bts.feature.operations.PackingScreen
 import com.babatiffin.bts.core.security.canAccessDeliveryOperations
 import com.babatiffin.bts.core.security.canAccessKitchenOperations
 import com.babatiffin.bts.core.location.LocationAccessEffect
+import com.babatiffin.bts.feature.info.AboutScreen
+import com.babatiffin.bts.feature.info.ContactScreen
+import com.babatiffin.bts.feature.info.FaqScreen
+import com.babatiffin.bts.feature.info.HowItWorksScreen
+import com.babatiffin.bts.feature.info.NutritionGuideScreen
+import com.babatiffin.bts.feature.orders.OrderConfirmationScreen
 
 private val authRequiredRoutes = setOf(
     BtsDestination.Dashboard.route,
@@ -170,7 +176,9 @@ fun BtsNavGraph(
     var hadAuthenticatedSession by rememberSaveable { mutableStateOf(false) }
 
     fun navigate(route: String) {
-        if (route in authRequiredRoutes && !authState.authenticated) {
+        val requiresAuth = route in authRequiredRoutes ||
+            route.startsWith("orders/") || route.startsWith("order-confirmation/")
+        if (requiresAuth && !authState.authenticated) {
             pendingRoute = route
             if (currentRoute != BtsDestination.Auth.route) navController.navigate(BtsDestination.Auth.route) { launchSingleTop = true }
             return
@@ -187,10 +195,11 @@ fun BtsNavGraph(
 
     LaunchedEffect(checkoutState.paymentComplete) {
         if (checkoutState.paymentComplete) {
+            val completedOrderId = checkoutState.completedOrderId
             cartViewModel.clear()
             ordersViewModel.load(authState.userId)
             checkoutViewModel.consumeCompletion()
-            navigate(BtsDestination.Orders.route)
+            navigate(completedOrderId?.let(BtsDestination.OrderConfirmation::createRoute) ?: BtsDestination.Orders.route)
         }
     }
 
@@ -252,6 +261,11 @@ fun BtsNavGraph(
                     },
                 )
             }
+            composable(BtsDestination.HowItWorks.route) { HowItWorksScreen() }
+            composable(BtsDestination.About.route) { AboutScreen() }
+            composable(BtsDestination.NutritionGuide.route) { NutritionGuideScreen() }
+            composable(BtsDestination.Faq.route) { FaqScreen() }
+            composable(BtsDestination.Contact.route) { ContactScreen() }
             composable(
                 route = BtsDestination.MealDetail.route,
                 arguments = listOf(navArgument("mealId") { type = NavType.StringType }),
@@ -365,6 +379,16 @@ fun BtsNavGraph(
                     addressesLoading = customerState.loading,
                     onManageAddress = { navigate(BtsDestination.AddAddress.route) },
                     onPay = { activity -> checkoutViewModel.pay(activity, cartLines) },
+                )
+            }
+            composable(
+                route = BtsDestination.OrderConfirmation.route,
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType }),
+            ) { entry ->
+                OrderConfirmationScreen(
+                    orderId = entry.arguments?.getString("orderId").orEmpty(),
+                    onViewOrders = { navigate(BtsDestination.Orders.route) },
+                    onHome = { navigate(BtsDestination.Home.route) },
                 )
             }
             composable(BtsDestination.AddAddress.route) {

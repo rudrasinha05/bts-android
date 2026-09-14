@@ -27,6 +27,7 @@ import com.babatiffin.bts.data.menu.Meal
 import com.babatiffin.bts.data.order.OrderDetails
 import com.babatiffin.bts.data.subscription.Subscription
 import com.babatiffin.bts.data.subscription.SubscriptionPlan
+import com.babatiffin.bts.domain.AppRules
 
 private fun recommendedPlanIds(
     plans: List<SubscriptionPlan>,
@@ -56,7 +57,7 @@ fun ManageSubscriptionScreen(
     val currentSubscription = state.subscriptions.firstOrNull { it.status == "active" || it.status == "paused" }
     val currentPlan = state.plans.firstOrNull { it.id == currentSubscription?.planId }
     val recommendedIds = recommendedPlanIds(state.plans, mealById, orderHistory)
-    val displayedPlans = if (currentPlan == null) state.plans else state.plans.filter { it.price > currentPlan.price }
+    val displayedPlans = state.plans.filter { AppRules.isSuccessorPlan(currentPlan?.price, it.price) }
     LazyColumn(modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("My subscription", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold) }
         if (state.loading) item { CircularProgressIndicator() }
