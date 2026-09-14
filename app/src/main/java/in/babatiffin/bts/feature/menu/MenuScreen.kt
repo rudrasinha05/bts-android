@@ -34,6 +34,8 @@ import com.babatiffin.bts.data.menu.Meal
 @Composable
 fun MenuScreen(
     state: MealDiscoveryState,
+    showCategories: Boolean,
+    onShowCategories: (Boolean) -> Unit,
     onCategory: (String) -> Unit,
     onFoodType: (String) -> Unit,
     onRetry: () -> Unit,
@@ -41,7 +43,6 @@ fun MenuScreen(
     onAddMeal: (Meal) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showCategories by rememberSaveable { mutableStateOf(false) }
     var foodGroup by rememberSaveable { mutableStateOf("all") }
     val visibleMeals = state.visibleMeals.filter { it.matchesMenuFoodGroup(foodGroup) }
 
@@ -69,7 +70,7 @@ fun MenuScreen(
                 for (value in state.categories) {
                     FilterChip(
                         selected = state.category == value,
-                        onClick = { foodGroup = "all"; onCategory(value) },
+                        onClick = { onCategory(value) },
                         label = { Text(value.replaceFirstChar(Char::uppercase)) },
                     )
                 }
@@ -81,7 +82,7 @@ fun MenuScreen(
                 for (value in menuFoodTypes) {
                     FilterChip(
                         selected = state.foodType == value,
-                        onClick = { foodGroup = "all"; onFoodType(value) },
+                        onClick = { onFoodType(value) },
                         label = { Text(value.replaceFirstChar(Char::uppercase)) },
                     )
                 }
@@ -119,7 +120,7 @@ fun MenuScreen(
             }
         }
         FloatingActionButton(
-            onClick = { showCategories = true },
+            onClick = { onShowCategories(true) },
             modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
         ) { Text("Menu", fontWeight = FontWeight.Bold) }
@@ -127,7 +128,7 @@ fun MenuScreen(
 
     if (showCategories) {
         AlertDialog(
-            onDismissRequest = { showCategories = false },
+            onDismissRequest = { onShowCategories(false) },
             title = { Text("Browse food categories") },
             text = {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -140,7 +141,7 @@ fun MenuScreen(
                                 onCategory("all")
                                 onFoodType("all")
                                 foodGroup = group.key
-                                showCategories = false
+                                onShowCategories(false)
                             },
                             enabled = available > 0,
                             modifier = Modifier.fillMaxWidth(),
@@ -158,7 +159,7 @@ fun MenuScreen(
                                 onCategory("all")
                                 onFoodType("all")
                                 foodGroup = "other"
-                                showCategories = false
+                                onShowCategories(false)
                             },
                             enabled = otherCount > 0,
                             modifier = Modifier.fillMaxWidth(),
@@ -174,10 +175,9 @@ fun MenuScreen(
                         val category = state.categories[index]
                         OutlinedButton(
                             onClick = {
-                                foodGroup = "all"
                                 onFoodType("all")
                                 onCategory(category)
-                                showCategories = false
+                                onShowCategories(false)
                             },
                             modifier = Modifier.fillMaxWidth(),
                         ) { Text(category.replaceFirstChar(Char::uppercase)) }
@@ -189,7 +189,7 @@ fun MenuScreen(
                     foodGroup = "all"
                     onCategory("all")
                     onFoodType("all")
-                    showCategories = false
+                    onShowCategories(false)
                 }) { Text("Show all") }
             },
         )

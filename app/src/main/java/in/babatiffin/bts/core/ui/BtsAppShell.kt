@@ -100,6 +100,7 @@ fun BtsAppShell(
     isAuthenticated: Boolean,
     roles: Set<String>,
     onBack: () -> Unit,
+    onBrowseCategories: () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -175,7 +176,7 @@ fun BtsAppShell(
                     },
                     floatingActionButton = {
                         if (currentRoute != BtsDestination.Menu.route) {
-                            FloatingActionButton(onClick = { onNavigate(BtsDestination.Menu.route) }) { Text("Menu") }
+                            FloatingActionButton(onClick = onBrowseCategories) { Text("Menu") }
                         }
                     },
                     content = content,
@@ -198,7 +199,7 @@ fun BtsAppShell(
                 },
                 floatingActionButton = {
                     if (currentRoute != BtsDestination.Menu.route) {
-                        FloatingActionButton(onClick = { onNavigate(BtsDestination.Menu.route) }) { Text("Menu") }
+                        FloatingActionButton(onClick = onBrowseCategories) { Text("Menu") }
                     }
                 },
                 bottomBar = {

@@ -114,6 +114,7 @@ fun BtsNavGraph(
         ) as T
     })
     val mealState by mealViewModel.state.collectAsState()
+    var showMenuCategories by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val cartViewModel: CartViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -231,6 +232,7 @@ fun BtsNavGraph(
         isAuthenticated = authState.authenticated,
         roles = authState.roles,
         onBack = { navController.popBackStack() },
+        onBrowseCategories = { showMenuCategories = true; navigate(BtsDestination.Menu.route) },
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -252,6 +254,8 @@ fun BtsNavGraph(
             composable(BtsDestination.Menu.route) {
                 MenuScreen(
                     state = mealState,
+                    showCategories = showMenuCategories,
+                    onShowCategories = { showMenuCategories = it },
                     onCategory = mealViewModel::selectCategory,
                     onFoodType = mealViewModel::selectFoodType,
                     onRetry = mealViewModel::refresh,

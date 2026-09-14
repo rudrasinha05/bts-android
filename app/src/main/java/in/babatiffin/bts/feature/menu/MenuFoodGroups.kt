@@ -22,19 +22,24 @@ val menuFoodGroups = listOf(
     MenuFoodGroup("sweet", "Sweets & drinks", "Desserts, sweets, raita and beverages", listOf("sweet", "dessert", "halwa", "kheer", "gulab", "lassi", "juice", "drink", "raita")),
 )
 
+// Dish form takes precedence over ingredients; whole words avoid "anda" in "kanda".
 fun Meal.menuFoodGroupKey(): String {
-    val searchable = buildString {
-        append(name)
-        append(' ')
-        append(category)
-        append(' ')
-        append(foodType)
-        append(' ')
-        append(tags.joinToString(" "))
-    }.lowercase()
-    return menuFoodGroups.firstOrNull { group ->
-        group.keywords.any(searchable::contains)
-    }?.key ?: "other"
+    val words = name.lowercase(java.util.Locale.ROOT).split(Regex("[^\\p{L}\\p{N}]+")).toSet()
+    fun has(vararg values: String) = values.any { it in words }
+    return when {
+        has("thali", "combo", "platter") -> "other"
+        has("rice", "chawal", "pulao", "pulav", "biryani", "khichdi") -> "rice"
+        has("roti", "chapati", "naan", "paratha", "parantha", "poori", "puri", "kulcha") -> "bread"
+        has("poha", "upma", "chilla", "cheela", "idli", "dosa", "pakora", "samosa", "sandwich", "toast") -> "breakfast"
+        has("halwa", "kheer", "gulab", "lassi", "juice", "raita", "curd") -> "sweet"
+        has("paneer") -> "paneer"
+        has("chicken", "murgh") -> "chicken"
+        has("dal", "daal", "rajma", "chole", "chana", "lentil") -> "dal"
+        has("egg", "eggs", "anda", "omelette", "omelet") -> "egg"
+        has("fish", "machli", "seafood") -> "fish"
+        has("sabzi", "sabji", "vegetable", "aloo", "gobhi", "bhindi", "kofta", "matar") -> "vegetable"
+        else -> "other"
+    }
 }
 
 fun Meal.matchesMenuFoodGroup(groupKey: String): Boolean =
