@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.babatiffin.bts.data.customer.Address
+import com.babatiffin.bts.domain.AppRules
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -33,6 +34,8 @@ fun LocationAccessEffect(
 
     fun updateSignedInLocation() {
         if (!authenticated || address == null || !hasPermission()) return
+        // A saved delivery pin belongs to that address, not the device's current position.
+        if (AppRules.hasValidCoordinates(address.latitude, address.longitude)) return
         val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val location = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
             .mapNotNull { provider -> runCatching { manager.getLastKnownLocation(provider) }.getOrNull() }

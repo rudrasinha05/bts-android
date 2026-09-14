@@ -39,6 +39,16 @@ jobs:
       - name: Run Android lint
         run: gradle :app:lintDebug --stacktrace
 
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-unit-test-results
+          path: |
+            app/build/test-results/testDebugUnitTest/*.xml
+            app/build/reports/tests/testDebugUnitTest/**
+          if-no-files-found: ignore
+
       - name: Upload lint report on failure
         if: failure()
         uses: actions/upload-artifact@v4

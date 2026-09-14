@@ -40,11 +40,19 @@ fun CheckoutScreen(
     onPaymentChoice: (PaymentChoice) -> Unit,
     onMealType: (String) -> Unit,
     address: Address?,
+    addresses: List<Address>,
+    addressError: String?,
+    onSelectAddress: (String) -> Unit,
+    onRetryAddresses: () -> Unit,
+    onEditAddress: (Address) -> Unit,
     addressesLoading: Boolean,
     onManageAddress: () -> Unit,
+    onRetryVerification: () -> Unit,
+    onViewOrders: () -> Unit,
     onPay: (Activity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showAddressPicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var locationConfirmed by remember(address) { mutableStateOf(false) }
     val subtotal = lines.sumOf(CartLine::lineTotal)
     val coupon = state.appliedCoupon
@@ -61,6 +69,13 @@ fun CheckoutScreen(
         Text("Review delivery, items and payment before placing your order.", style = MaterialTheme.typography.bodyMedium)
         if (state.loading) CircularProgressIndicator()
         if (state.error != null) Text(state.error, color = MaterialTheme.colorScheme.error)
+        if (state.verificationPending) {
+            Text("Payment confirmation is pending. Retry verification; do not pay again.")
+            Button(onClick = onRetryVerification, enabled = !state.loading) { Text("Check payment status") }
+        }
+        if (state.verificationPending || state.paymentUncertain) {
+            OutlinedButton(onClick = onViewOrders) { Text("View orders") }
+        }
         if (lines.isEmpty()) {
             Card(Modifier.fillMaxWidth()) { Text("Your cart is empty. Add at least one meal before checkout.", Modifier.padding(16.dp)) }
         }
@@ -68,6 +83,10 @@ fun CheckoutScreen(
         CheckoutSectionTitle("1", "Delivery address")
         when {
             addressesLoading -> CircularProgressIndicator()
+            addressError != null -> {
+                Text(addressError, color = MaterialTheme.colorScheme.error)
+                OutlinedButton(onClick = onRetryAddresses) { Text("Retry addresses") }
+            }
             address == null -> {
                 Text("Add at least one delivery address before checkout.", color = MaterialTheme.colorScheme.error)
                 Button(onClick = onManageAddress, modifier = Modifier.fillMaxWidth()) { Text("Add delivery address") }
@@ -75,12 +94,13 @@ fun CheckoutScreen(
             else -> Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("${address.label}${if (address.isDefault) " · Default" else ""}", fontWeight = FontWeight.Bold)
-                    Text("${address.line1}, ${address.city} - ${address.pincode}")
+                    Text(listOfNotNull(address.line1, address.line2, address.landmark, address.city, address.state, address.pincode).joinToString(", "))
                     Text(if (address.latitude != null && address.longitude != null) "GPS location attached" else "GPS location not attached", color = if (address.latitude != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
                     Button(onClick = { locationConfirmed = true }, enabled = locationReady && !locationConfirmed, modifier = Modifier.fillMaxWidth()) {
                         Text(if (locationConfirmed) "Location confirmed" else if (locationReady) "Confirm delivery location" else "GPS location required")
                     }
-                    OutlinedButton(onClick = onManageAddress, modifier = Modifier.fillMaxWidth()) { Text("Change address") }
+                    OutlinedButton(onClick = { showAddressPicker = true }, modifier = Modifier.fillMaxWidth()) { Text("Change address") }
+                    OutlinedButton(onClick = { onEditAddress(address) }, modifier = Modifier.fillMaxWidth()) { Text("Edit this address") }
                 }
             }
         }
@@ -149,7 +169,7 @@ fun CheckoutScreen(
         }
         Button(
             onClick = { onPay(activity) },
-            enabled = walletReady && AppRules.isCheckoutReady(lines.isNotEmpty(), address != null, locationReady, locationConfirmed, termsAccepted, state.loading),
+            enabled = !state.verificationPending && !state.paymentUncertain && !addressesLoading && addressError == null && walletReady && AppRules.isCheckoutReady(lines.isNotEmpty(), address != null, locationReady, locationConfirmed, termsAccepted, state.loading),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Place order · Pay ₹${total.toInt()}")
@@ -160,6 +180,28 @@ fun CheckoutScreen(
         Text(
             "Secure payment is created and verified by the BTS server. No Razorpay secret is stored in this app.",
             style = MaterialTheme.typography.bodySmall,
+        )
+    }
+    if (showAddressPicker) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showAddressPicker = false },
+            title = { Text("Delivery address") },
+            text = {
+                androidx.compose.foundation.lazy.LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item { Button(onClick = { showAddressPicker = false; onManageAddress() }, modifier = Modifier.fillMaxWidth()) { Text("Add new address") } }
+                    items(addresses.size) { index ->
+                        val saved = addresses[index]
+                        Card(onClick = { onSelectAddress(saved.id); showAddressPicker = false }, modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(12.dp)) {
+                                Text("${if (saved.id == address?.id) "✓ " else ""}${saved.label}${if (saved.isDefault) " · Default" else ""}", fontWeight = FontWeight.Bold)
+                                Text(listOfNotNull(saved.line1, saved.line2, saved.city, saved.pincode).joinToString(", "))
+                                androidx.compose.material3.TextButton(onClick = { showAddressPicker = false; onEditAddress(saved) }) { Text("Edit") }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { OutlinedButton(onClick = { showAddressPicker = false }) { Text("Close") } },
         )
     }
 }

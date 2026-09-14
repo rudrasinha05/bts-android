@@ -93,7 +93,8 @@ interface CustomerRepository {
     suspend fun profile(userId: String): CustomerProfile?
     suspend fun saveProfile(profile: CustomerProfile)
     suspend fun addresses(userId: String): List<Address>
-    suspend fun addAddress(address: AddressWrite)
+    suspend fun addAddress(address: AddressWrite): Address
+    suspend fun editAddress(id: String, address: AddressWrite): Address
     suspend fun deleteAddress(id: String, userId: String)
     suspend fun setDefaultAddress(id: String, userId: String)
     suspend fun updateLocation(id: String, userId: String, latitude: Double, longitude: Double)
@@ -111,10 +112,14 @@ class SupabaseCustomerRepository(private val client: SupabaseClient) : CustomerR
         else client.from("profiles").update({ set("full_name", profile.fullName); set("phone", profile.phone); set("date_of_birth", profile.dateOfBirth) }) { filter { eq("id", profile.id) } }
     }
     override suspend fun addresses(userId: String) = client.from("addresses").select { filter { eq("user_id", userId); eq("is_active", true) } }.decodeList<Address>().sortedByDescending(Address::isDefault)
-    override suspend fun addAddress(address: AddressWrite) {
-        if (address.isDefault) client.from("addresses").update({ set("is_default", false) }) { filter { eq("user_id", address.userId) } }
-        client.from("addresses").insert(address)
-    }
+    override suspend fun addAddress(address: AddressWrite): Address =
+        client.from("addresses").insert(address) { select() }.decodeSingle()
+
+    override suspend fun editAddress(id: String, address: AddressWrite): Address =
+        client.from("addresses").update(address) {
+            filter { eq("id", id); eq("user_id", address.userId); eq("is_active", true) }
+            select()
+        }.decodeSingle()
     override suspend fun deleteAddress(id: String, userId: String) { client.from("addresses").update({ set("is_active", false) }) { filter { eq("id", id); eq("user_id", userId) } } }
     override suspend fun setDefaultAddress(id: String, userId: String) {
         client.from("addresses").update({ set("is_default", false) }) { filter { eq("user_id", userId) } }

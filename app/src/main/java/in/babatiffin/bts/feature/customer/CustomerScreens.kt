@@ -36,6 +36,7 @@ import java.util.Locale
     accountPhone: String?,
     onSave: (String, String, String) -> Unit,
     onAddNewAddress: () -> Unit,
+    onEditAddress: (com.babatiffin.bts.data.customer.Address) -> Unit,
     onDefault: (com.babatiffin.bts.data.customer.Address) -> Unit,
     onDelete: (com.babatiffin.bts.data.customer.Address) -> Unit,
     onOrders: () -> Unit,
@@ -157,6 +158,7 @@ import java.util.Locale
                                 Text(listOfNotNull(address.line1, address.line2, address.landmark, address.city, address.state, address.pincode).joinToString(", "))
                                 Row {
                                     TextButton(onClick = { onDefault(address) }, enabled = !address.isDefault) { Text("Make default") }
+                                    TextButton(onClick = { onEditAddress(address) }) { Text("Edit") }
                                     TextButton(onClick = { onDelete(address) }) { Text("Remove") }
                                 }
                             }

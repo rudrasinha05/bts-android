@@ -29,6 +29,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.core.location.LocationManagerCompat
+import androidx.core.os.CancellationSignal
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.resume
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +46,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.babatiffin.bts.R
 import com.babatiffin.bts.data.customer.DeliveryAddressDraft
+import com.babatiffin.bts.data.customer.Address
+import com.babatiffin.bts.domain.AppRules
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -49,43 +58,69 @@ import org.osmdroid.views.overlay.Marker
 @Composable
 fun AddAddressScreen(
     state: CustomerState,
+    initialAddress: Address? = null,
     onSave: (DeliveryAddressDraft, () -> Unit) -> Unit,
     onSaved: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var showLocationPrompt by rememberSaveable { mutableStateOf(true) }
-    var latitude by rememberSaveable { mutableStateOf<Double?>(null) }
-    var longitude by rememberSaveable { mutableStateOf<Double?>(null) }
+    val scope = rememberCoroutineScope()
+    var locating by remember { mutableStateOf(false) }
+    var pinConfirmed by rememberSaveable { mutableStateOf(false) }
+    var showLocationPrompt by rememberSaveable { mutableStateOf(initialAddress == null) }
+    var latitude by rememberSaveable { mutableStateOf(initialAddress?.latitude) }
+    var longitude by rememberSaveable { mutableStateOf(initialAddress?.longitude) }
     var locationError by rememberSaveable { mutableStateOf<String?>(null) }
-    var name by remember(state.profile) { mutableStateOf(state.profile?.fullName.orEmpty()) }
-    var phone by remember(state.profile) { mutableStateOf(state.profile?.phone.orEmpty()) }
-    var label by rememberSaveable { mutableStateOf("Home") }
-    var house by rememberSaveable { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf(state.profile?.fullName.orEmpty()) }
+    var phone by rememberSaveable { mutableStateOf(state.profile?.phone.orEmpty().removePrefix("+91")) }
+    var label by rememberSaveable { mutableStateOf(initialAddress?.label ?: "Home") }
+    var house by rememberSaveable { mutableStateOf(initialAddress?.line1.orEmpty()) }
     var building by rememberSaveable { mutableStateOf("") }
     var floor by rememberSaveable { mutableStateOf("") }
-    var locality by rememberSaveable { mutableStateOf("") }
-    var landmark by rememberSaveable { mutableStateOf("") }
-    var stateName by rememberSaveable { mutableStateOf("Uttar Pradesh") }
-    var district by rememberSaveable { mutableStateOf("Greater Noida") }
-    var pincode by rememberSaveable { mutableStateOf("") }
+    var locality by rememberSaveable { mutableStateOf(initialAddress?.line2.orEmpty()) }
+    var landmark by rememberSaveable { mutableStateOf(initialAddress?.landmark.orEmpty()) }
+    var stateName by rememberSaveable { mutableStateOf(initialAddress?.state ?: "Uttar Pradesh") }
+    var district by rememberSaveable { mutableStateOf(initialAddress?.city ?: "Greater Noida") }
+    var pincode by rememberSaveable { mutableStateOf(initialAddress?.pincode.orEmpty()) }
 
     fun captureLocation() {
         val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val location = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
-            .mapNotNull { runCatching { manager.getLastKnownLocation(it) }.getOrNull() }
-            .maxByOrNull { it.time }
-        if (location == null) locationError = "Current location unavailable. Turn on device location and retry."
-        else {
-            latitude = location.latitude
-            longitude = location.longitude
-            locationError = null
-            showLocationPrompt = false
+        if (locating) return
+        showLocationPrompt = false
+        locating = true
+        locationError = null
+        scope.launch {
+            try {
+                val provider = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+                    .firstOrNull { runCatching { manager.isProviderEnabled(it) }.getOrDefault(false) }
+                val location = if (provider == null) null else withTimeoutOrNull(15_000L) {
+                    suspendCancellableCoroutine<android.location.Location?> { continuation ->
+                        val cancellation = CancellationSignal()
+                        continuation.invokeOnCancellation { cancellation.cancel() }
+                        LocationManagerCompat.getCurrentLocation(manager, provider, cancellation,
+                            ContextCompat.getMainExecutor(context)) { result ->
+                            if (continuation.isActive) continuation.resume(result)
+                        }
+                    }
+                }
+                if (location == null) locationError = "Could not get a current fix. Turn on device location and retry."
+                else {
+                    latitude = location.latitude
+                    longitude = location.longitude
+                    pinConfirmed = false
+                }
+            } catch (_: SecurityException) {
+                locationError = "Location permission is required. Allow it and retry."
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e
+            } catch (_: Exception) {
+                locationError = "Location is unavailable. Check device location settings and retry."
+            } finally { locating = false }
         }
     }
 
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-        if (result.values.any { it }) captureLocation() else locationError = "Location permission is required to save this delivery address."
+        showLocationPrompt = false
+        if (result.values.any { it }) captureLocation() else locationError = "Location permission denied. You can enable it in app settings and retry."
     }
     fun useCurrentLocation() {
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
@@ -96,16 +131,18 @@ fun AddAddressScreen(
 
     LazyColumn(modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Text("Save delivery address", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(if (initialAddress == null) "Save delivery address" else "Edit delivery address", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text("Confirm your GPS pin, then complete the address details.")
         }
         item {
-            if (latitude != null && longitude != null) {
-                LocationMap(latitude!!, longitude!!)
+            if (AppRules.hasValidCoordinates(latitude, longitude)) {
+                LocationMap(latitude!!, longitude!!) { lat, lon -> latitude = lat; longitude = lon; pinConfirmed = false }
                 Text("Blue pin · ${"%.5f".format(latitude)}, ${"%.5f".format(longitude)}", color = MaterialTheme.colorScheme.primary)
-            } else {
-                OutlinedButton(onClick = ::useCurrentLocation, modifier = Modifier.fillMaxWidth()) { Text("Use current location") }
+                Text("Drag the pin to your delivery entrance, then confirm it.")
+                Button(onClick = { pinConfirmed = true }, enabled = !locating && !pinConfirmed) { Text(if (pinConfirmed) "Pin confirmed" else "Confirm this pin") }
             }
+            OutlinedButton(onClick = ::useCurrentLocation, enabled = !locating && !state.addressSaving, modifier = Modifier.fillMaxWidth()) { Text(if (locating) "Finding current location…" else "Use current location") }
+            if (locating) CircularProgressIndicator()
             locationError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
         item {
@@ -113,7 +150,7 @@ fun AddAddressScreen(
                 AddressField("Full name *", name) { name = it }
                 AddressField("Contact number *", phone, KeyboardType.Phone) { phone = it.filter(Char::isDigit).take(10) }
                 AddressField("Save as (Home/Work)", label) { label = it }
-                AddressField("House/Flat number *", house) { house = it }
+                AddressField(if (initialAddress == null) "House/Flat number *" else "House/Flat and building *", house) { house = it }
                 AddressField("Building name", building) { building = it }
                 AddressField("Floor number", floor) { floor = it }
                 AddressField("Locality/Area *", locality) { locality = it }
@@ -121,7 +158,7 @@ fun AddAddressScreen(
                 AddressField("District/City *", district) { district = it }
                 AddressField("State *", stateName) { stateName = it }
                 AddressField("Pincode *", pincode, KeyboardType.Number) { pincode = it.filter(Char::isDigit).take(6) }
-                if (state.loading) CircularProgressIndicator()
+                if (state.addressSaving) CircularProgressIndicator()
                 state.message?.let { Text(it, color = if (it == "Address added.") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error) }
                 Button(
                     onClick = {
@@ -130,9 +167,9 @@ fun AddAddressScreen(
                             onSaved,
                         )
                     },
-                    enabled = !state.loading && latitude != null && longitude != null && name.isNotBlank() && phone.length == 10 && house.isNotBlank() && locality.isNotBlank() && district.isNotBlank() && stateName.isNotBlank() && pincode.length == 6,
+                    enabled = !state.addressSaving && !locating && pinConfirmed && AppRules.hasValidCoordinates(latitude, longitude),
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Save address") }
+                ) { Text(if (state.addressSaving) "Saving…" else "Save address") }
             }
         }
     }
@@ -161,7 +198,7 @@ private fun AddressField(label: String, value: String, keyboardType: KeyboardTyp
 }
 
 @Composable
-private fun LocationMap(latitude: Double, longitude: Double) {
+private fun LocationMap(latitude: Double, longitude: Double, onPinChanged: (Double, Double) -> Unit) {
     val context = LocalContext.current
     val mapView = remember(context) {
         Configuration.getInstance().userAgentValue = context.packageName
@@ -191,6 +228,12 @@ private fun LocationMap(latitude: Double, longitude: Double) {
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     icon = ContextCompat.getDrawable(context, R.drawable.ic_location_pin_blue)
                     title = "Current delivery location"
+                    isDraggable = true
+                    setOnMarkerDragListener(object : Marker.OnMarkerDragListener {
+                        override fun onMarkerDrag(marker: Marker) = Unit
+                        override fun onMarkerDragStart(marker: Marker) = Unit
+                        override fun onMarkerDragEnd(marker: Marker) { onPinChanged(marker.position.latitude, marker.position.longitude) }
+                    })
                 },
             )
             map.invalidate()

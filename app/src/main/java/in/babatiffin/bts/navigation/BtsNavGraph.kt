@@ -27,6 +27,8 @@ import com.babatiffin.bts.feature.auth.AuthScreen
 import com.babatiffin.bts.feature.auth.AuthViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -142,8 +144,9 @@ fun BtsNavGraph(
     LaunchedEffect(authState.userId) { ordersViewModel.load(authState.userId) }
     val checkoutViewModel: CheckoutViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = CheckoutViewModel(
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T = CheckoutViewModel(
             SupabaseProvider.client?.let(::SupabaseCheckoutRepository),
+            extras.createSavedStateHandle(),
         ) as T
     })
     val checkoutState by checkoutViewModel.state.collectAsState()
@@ -156,7 +159,8 @@ fun BtsNavGraph(
     })
     val customerState by customerViewModel.state.collectAsState()
     LaunchedEffect(authState.userId) { customerViewModel.load(authState.userId) }
-    val deliveryAddress = customerState.addresses.firstOrNull { it.isDefault } ?: customerState.addresses.firstOrNull()
+    val deliveryAddress = com.babatiffin.bts.feature.customer.selectedDeliveryAddress(customerState.addresses, customerState.selectedAddressId)
+    var editingAddressId by rememberSaveable(authState.userId) { mutableStateOf<String?>(null) }
     LocationAccessEffect(
         authenticated = authState.authenticated,
         address = deliveryAddress,
@@ -351,7 +355,8 @@ fun BtsNavGraph(
                     accountEmail = authState.email,
                     accountPhone = authState.phone,
                     onSave = customerViewModel::saveProfile,
-                    onAddNewAddress = { navigate(BtsDestination.AddAddress.route) },
+                    onAddNewAddress = { editingAddressId = null; customerViewModel.clearAddressMessage(); navigate(BtsDestination.AddAddress.route) },
+                    onEditAddress = { editingAddressId = it.id; customerViewModel.clearAddressMessage(); navigate(BtsDestination.AddAddress.route) },
                     onDefault = customerViewModel::setDefault,
                     onDelete = customerViewModel::deleteAddress,
                     onOrders = { navigate(BtsDestination.Orders.route) },
@@ -389,8 +394,15 @@ fun BtsNavGraph(
                     onPaymentChoice = checkoutViewModel::choosePayment,
                     onMealType = checkoutViewModel::chooseMealType,
                     address = deliveryAddress,
+                    addresses = customerState.addresses,
+                    addressError = customerState.addressError,
+                    onSelectAddress = customerViewModel::selectAddress,
+                    onRetryAddresses = customerViewModel::reloadAddresses,
+                    onEditAddress = { editingAddressId = it.id; customerViewModel.clearAddressMessage(); navigate(BtsDestination.AddAddress.route) },
                     addressesLoading = customerState.loading,
-                    onManageAddress = { navigate(BtsDestination.AddAddress.route) },
+                    onManageAddress = { editingAddressId = null; customerViewModel.clearAddressMessage(); navigate(BtsDestination.AddAddress.route) },
+                    onRetryVerification = checkoutViewModel::retryVerification,
+                    onViewOrders = { navigate(BtsDestination.Orders.route) },
                     onPay = { activity -> checkoutViewModel.pay(activity, cartLines, deliveryAddress?.id) },
                 )
             }
@@ -407,7 +419,8 @@ fun BtsNavGraph(
             composable(BtsDestination.AddAddress.route) {
                 AddAddressScreen(
                     state = customerState,
-                    onSave = customerViewModel::addDeliveryAddress,
+                    initialAddress = customerState.addresses.firstOrNull { it.id == editingAddressId },
+                    onSave = { draft, done -> customerViewModel.saveDeliveryAddress(editingAddressId, draft, done) },
                     onSaved = { navController.popBackStack() },
                 )
             }

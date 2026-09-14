@@ -16,6 +16,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import io.ktor.client.plugins.HttpTimeout
 
 @Serializable
 data class Wallet(
@@ -47,6 +48,7 @@ data class Coupon(
 @Serializable data class PaymentVerification(val razorpayOrderId: String, val razorpayPaymentId: String, val razorpaySignature: String)
 @Serializable data class VerificationResult(val verified: Boolean, val orderId: String)
 @Serializable data class WalletPaymentResult(val verified: Boolean, val orderId: String, val balance: Double)
+class CheckoutRejected : Exception("The server rejected this checkout. Review your cart, coupon and address.")
 
 interface CheckoutRepository {
     suspend fun wallet(userId: String): Wallet?
@@ -57,7 +59,9 @@ interface CheckoutRepository {
 }
 
 class SupabaseCheckoutRepository(private val client: SupabaseClient) : CheckoutRepository {
-    private val http = HttpClient(Android)
+    private val http = HttpClient(Android) {
+        install(HttpTimeout) { requestTimeoutMillis = 30_000; connectTimeoutMillis = 15_000; socketTimeoutMillis = 30_000 }
+    }
     private val json = Json { ignoreUnknownKeys = true }
     override suspend fun wallet(userId: String): Wallet? = client.from("wallets")
         .select {
@@ -83,6 +87,8 @@ class SupabaseCheckoutRepository(private val client: SupabaseClient) : CheckoutR
             contentType(ContentType.Application.Json)
             setBody(payload)
         }
+        if (response.status.value in listOf(400, 401, 403, 404, 409, 422)) throw CheckoutRejected()
+        check(response.status.value in 200..299) { "Checkout response unavailable" }
         return json.decodeFromString(response.bodyAsText())
     }
 }
