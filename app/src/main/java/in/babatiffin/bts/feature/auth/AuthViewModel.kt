@@ -15,9 +15,12 @@ data class AuthUiState(
     val loading: Boolean = true,
     val authenticated: Boolean = false,
     val userLabel: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
     val userId: String? = null,
     val message: String? = null,
     val otpSent: Boolean = false,
+    val otpPhone: String? = null,
     val roles: Set<String> = emptySet(),
 )
 
@@ -36,13 +39,25 @@ class AuthViewModel(private val repository: AuthRepository?, configured: Boolean
                         _state.value.copy(
                             loading = false, authenticated = true,
                             userLabel = user?.email ?: user?.phone,
+                            email = user?.email,
+                            phone = user?.phone,
                             userId = user?.id,
                             roles = roles,
                             message = null,
                         )
                     }
                     is SessionStatus.Initializing -> _state.value.copy(loading = true)
-                    else -> _state.value.copy(loading = false, authenticated = false, userLabel = null, userId = null, roles = emptySet())
+                    else -> _state.value.copy(
+                        loading = false,
+                        authenticated = false,
+                        userLabel = null,
+                        email = null,
+                        phone = null,
+                        userId = null,
+                        otpSent = false,
+                        otpPhone = null,
+                        roles = emptySet(),
+                    )
                 }
             }
         }
@@ -50,8 +65,16 @@ class AuthViewModel(private val repository: AuthRepository?, configured: Boolean
 
     fun signIn(email: String, password: String) = execute { this.signIn(email, password) }
     fun signUp(email: String, password: String) = execute { this.signUp(email, password) }
-    fun sendOtp(phone: String) = execute(success = { it.copy(otpSent = true, message = "OTP sent.") }) { this.sendPhoneOtp(phone) }
-    fun verifyOtp(phone: String, otp: String) = execute { this.verifyPhoneOtp(phone, otp) }
+    fun sendOtp(phone: String) = execute(success = { it.copy(otpSent = true, otpPhone = phone.trim(), message = "OTP sent. Check your SMS.") }) {
+        sendPhoneOtp(phone)
+    }
+    fun verifyOtp(phone: String, otp: String) {
+        val requestedPhone = _state.value.otpPhone ?: phone
+        execute(success = { it.copy(otpSent = false, otpPhone = null, message = null) }) {
+            verifyPhoneOtp(requestedPhone, otp)
+        }
+    }
+    fun changeOtpNumber() { _state.value = _state.value.copy(otpSent = false, otpPhone = null, message = null) }
     fun google() = execute { this.signInWithGoogle() }
     fun signOut() = execute { this.signOut() }
 
@@ -65,8 +88,16 @@ class AuthViewModel(private val repository: AuthRepository?, configured: Boolean
         }
     }
 
-    private fun friendlyError(error: Throwable): String = when (error) {
-        is IllegalArgumentException -> error.message ?: "Please check the entered details."
-        else -> "Authentication failed. Please check your details and try again."
+    private fun friendlyError(error: Throwable): String {
+        val detail = generateSequence(error) { it.cause }.mapNotNull(Throwable::message).firstOrNull().orEmpty()
+        return when {
+            error is IllegalArgumentException -> detail.ifBlank { "Please check the entered details." }
+            detail.contains("provider", ignoreCase = true) && detail.contains("phone", ignoreCase = true) ->
+                "Phone OTP is not configured on the server. Enable Phone Auth and an SMS provider in Supabase."
+            detail.contains("rate", ignoreCase = true) -> "Too many OTP requests. Please wait before trying again."
+            detail.contains("expired", ignoreCase = true) -> "OTP expired. Request a new code."
+            detail.contains("invalid", ignoreCase = true) -> "Invalid phone number or OTP. Please check and retry."
+            else -> detail.ifBlank { "Authentication failed. Please check your details and try again." }
+        }
     }
 }

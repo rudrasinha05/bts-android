@@ -167,6 +167,7 @@ fun BtsNavGraph(
     val operationsState by operationsViewModel.state.collectAsState()
     LaunchedEffect(authState.roles){operationsViewModel.load(authState.roles)}
     var pendingRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    var hadAuthenticatedSession by rememberSaveable { mutableStateOf(false) }
 
     fun navigate(route: String) {
         if (route in authRequiredRoutes && !authState.authenticated) {
@@ -193,10 +194,23 @@ fun BtsNavGraph(
         }
     }
 
-    LaunchedEffect(authState.authenticated) {
-        if (authState.authenticated) pendingRoute?.let { destination ->
-            pendingRoute = null
-            navigate(destination)
+    LaunchedEffect(authState.authenticated, authState.loading) {
+        when {
+            authState.authenticated -> {
+                hadAuthenticatedSession = true
+                pendingRoute?.let { destination ->
+                    pendingRoute = null
+                    navigate(destination)
+                }
+            }
+            !authState.loading && hadAuthenticatedSession -> {
+                hadAuthenticatedSession = false
+                pendingRoute = null
+                navController.navigate(BtsDestination.Home.route) {
+                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
         }
     }
 
@@ -313,6 +327,8 @@ fun BtsNavGraph(
             composable(BtsDestination.Profile.route) {
                 ProfileScreen(
                     state = customerState,
+                    accountEmail = authState.email,
+                    accountPhone = authState.phone,
                     onSave = customerViewModel::saveProfile,
                     onAddNewAddress = { navigate(BtsDestination.AddAddress.route) },
                     onDefault = customerViewModel::setDefault,

@@ -32,6 +32,8 @@ import java.util.Locale
 
 @Composable fun ProfileScreen(
     state: CustomerState,
+    accountEmail: String?,
+    accountPhone: String?,
     onSave: (String, String, String) -> Unit,
     onAddNewAddress: () -> Unit,
     onDefault: (com.babatiffin.bts.data.customer.Address) -> Unit,
@@ -74,7 +76,18 @@ import java.util.Locale
                     }
                     Column(Modifier.weight(1f)) {
                         Text(name.ifBlank { "BTS customer" }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(state.profile?.email ?: phone.ifBlank { "Complete your profile" }, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            state.profile?.email ?: accountEmail ?: "Email not added",
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            state.profile?.phone ?: accountPhone ?: "Phone number not added",
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                         TextButton(onClick = { showProfileEditor = !showProfileEditor }, contentPadding = PaddingValues(0.dp)) {
                             Text(if (showProfileEditor) "Close editor" else "Edit profile")
                         }
