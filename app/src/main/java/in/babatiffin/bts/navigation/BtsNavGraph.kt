@@ -230,6 +230,7 @@ fun BtsNavGraph(
         onNavigate = ::navigate,
         isAuthenticated = authState.authenticated,
         roles = authState.roles,
+        onBack = { navController.popBackStack() },
     ) { innerPadding ->
         NavHost(
             navController = navController,

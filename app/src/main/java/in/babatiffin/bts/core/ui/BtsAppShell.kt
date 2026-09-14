@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.ContactSupport
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -98,6 +99,7 @@ fun BtsAppShell(
     onNavigate: (String) -> Unit,
     isAuthenticated: Boolean,
     roles: Set<String>,
+    onBack: () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -124,7 +126,17 @@ fun BtsAppShell(
                     Divider()
                     Spacer(Modifier.height(BtsSpacing.Sm))
                     val operations=buildList{if(roles.canAccessKitchenOperations())addAll(kitchenItems);if(roles.canAccessDeliveryOperations())addAll(deliveryItems)}
-                    (publicDrawerItems + accountDrawerItems + operations).forEach { item ->
+                    val coreItems = buildList {
+                        add(primaryItems[0])
+                        add(primaryItems[1])
+                        if (isAuthenticated) add(primaryItems[2])
+                        addAll(accountDrawerItems)
+                        if (isAuthenticated) {
+                            add(primaryItems[3])
+                            add(primaryItems[4])
+                        }
+                    }.distinctBy(ShellItem::route)
+                    (coreItems + publicDrawerItems + operations).forEach { item ->
                         NavigationDrawerItem(
                             label = { Text(item.label) },
                             selected = currentRoute == item.route,
@@ -158,6 +170,7 @@ fun BtsAppShell(
                             onOpenNotifications = { onNavigate(BtsDestination.Notifications.route) },
                             onOpenAccount = { onNavigate(if (isAuthenticated) BtsDestination.Profile.route else BtsDestination.Auth.route) },
                             onSearch = { onNavigate(BtsDestination.Menu.route) },
+                            onBack = onBack,
                         )
                     },
                     floatingActionButton = {
@@ -180,6 +193,7 @@ fun BtsAppShell(
                         onOpenNotifications = { onNavigate(BtsDestination.Notifications.route) },
                         onOpenAccount = { onNavigate(if (isAuthenticated) BtsDestination.Profile.route else BtsDestination.Auth.route) },
                         onSearch = { onNavigate(BtsDestination.Menu.route) },
+                        onBack = onBack,
                     )
                 },
                 floatingActionButton = {
@@ -239,6 +253,7 @@ private fun BtsTopBar(
     onOpenNotifications: () -> Unit,
     onOpenAccount: () -> Unit,
     onSearch: () -> Unit,
+    onBack: () -> Unit,
 ) {
     Surface(shadowElevation = 2.dp) {
         Row(
@@ -248,8 +263,12 @@ private fun BtsTopBar(
                 .padding(horizontal = BtsSpacing.Sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onOpenDrawer) {
-                Icon(Icons.Default.Menu, contentDescription = "Open navigation")
+            val isHome = currentRoute == BtsDestination.Home.route
+            IconButton(onClick = if (isHome) onOpenDrawer else onBack) {
+                Icon(
+                    if (isHome) Icons.Default.Menu else Icons.Default.ArrowBack,
+                    contentDescription = if (isHome) "Open navigation" else "Back",
+                )
             }
             Spacer(Modifier.width(BtsSpacing.Sm))
             Column(modifier = Modifier.weight(1f)) {

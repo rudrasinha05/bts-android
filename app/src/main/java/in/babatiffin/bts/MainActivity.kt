@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import com.babatiffin.bts.core.design.BtsTheme
 import com.babatiffin.bts.navigation.BtsNavGraph
 import com.babatiffin.bts.data.backend.SupabaseProvider
@@ -39,12 +40,16 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         ) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         setContent {
             val systemDark = isSystemInDarkTheme()
-            var darkTheme by rememberSaveable { mutableStateOf(systemDark) }
+            val preferences = remember { getSharedPreferences("bts_settings", MODE_PRIVATE) }
+            var darkTheme by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_theme", systemDark)) }
 
             BtsTheme(darkTheme = darkTheme) {
                 BtsNavGraph(
                     isDarkTheme = darkTheme,
-                    onToggleTheme = { darkTheme = !darkTheme },
+                    onToggleTheme = {
+                        darkTheme = !darkTheme
+                        preferences.edit().putBoolean("dark_theme", darkTheme).apply()
+                    },
                 )
             }
         }
