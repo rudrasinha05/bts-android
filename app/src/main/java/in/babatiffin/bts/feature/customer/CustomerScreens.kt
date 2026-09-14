@@ -140,7 +140,7 @@ import java.util.Locale
                                     Text(selectedAddress?.let { "${it.label}${if (it.isDefault) " · Default" else ""}" } ?: "Select saved address")
                                 }
                                 DropdownMenu(expanded = addressMenuExpanded, onDismissRequest = { addressMenuExpanded = false }) {
-                                    state.addresses.forEach { address ->
+                                    for (address in state.addresses) {
                                         DropdownMenuItem(
                                             text = {
                                                 Column {

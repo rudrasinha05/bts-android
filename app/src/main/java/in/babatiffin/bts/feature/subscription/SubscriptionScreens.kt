@@ -130,7 +130,7 @@ private fun SubscriptionPlanCard(
             Text(plan.name + if (recommended) " • Recommended" else if (plan.isPopular) " • Popular" else "", style = MaterialTheme.typography.titleLarge)
             Text(plan.description)
             Text("${plan.mealsPerCycle} meals • ${plan.mealSchedule.replace('_', ' ')} • ${plan.foodType}")
-            plan.highlights.forEach { Text("• $it") }
+            for (highlight in plan.highlights) Text("• $highlight")
             Text("₹${plan.price.toInt()} / ${plan.billingCycle}", fontWeight = FontWeight.Bold)
             Button(onClick = onSelect, modifier = Modifier.fillMaxWidth()) { Text(if (upgrade) "Upgrade" else "Choose plan") }
         }
