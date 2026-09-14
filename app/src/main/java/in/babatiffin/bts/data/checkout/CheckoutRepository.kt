@@ -36,7 +36,13 @@ data class Coupon(
 )
 
 @Serializable data class CheckoutItem(val mealId: String, val quantity: Int)
-@Serializable data class PaymentOrderRequest(val items: List<CheckoutItem>, val couponCode: String? = null, val mealType: String, val method: String = "UPI")
+@Serializable data class PaymentOrderRequest(
+    val items: List<CheckoutItem>,
+    val couponCode: String? = null,
+    val mealType: String,
+    val method: String = "UPI",
+    val addressId: String? = null,
+)
 @Serializable data class PaymentOrder(val orderId: String, val orderNumber: String, val razorpayOrderId: String, val keyId: String, val amount: Int, val currency: String)
 @Serializable data class PaymentVerification(val razorpayOrderId: String, val razorpayPaymentId: String, val razorpaySignature: String)
 @Serializable data class VerificationResult(val verified: Boolean, val orderId: String)

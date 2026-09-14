@@ -19,4 +19,13 @@ class PushTokenRepository(private val client: SupabaseClient) {
             PushTokenUpsert(userId = userId, token = token),
         ) { onConflict = "token" }
     }
+
+    suspend fun unregister(userId: String, token: String) {
+        client.from("push_device_tokens").delete {
+            filter {
+                eq("user_id", userId)
+                eq("token", token)
+            }
+        }
+    }
 }

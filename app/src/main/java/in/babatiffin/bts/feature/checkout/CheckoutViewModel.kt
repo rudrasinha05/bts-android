@@ -52,7 +52,8 @@ class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel
     }
 
     fun load(userId: String?) {
-        if (userId == null || (userId == _state.value.userId && _state.value.coupons.isNotEmpty())) return
+        if (userId == null) { _state.value = CheckoutState(); return }
+        if (userId == _state.value.userId && _state.value.coupons.isNotEmpty()) return
         if (repository == null) {
             _state.value = CheckoutState(userId = userId, error = "Backend configuration is required.")
             return
@@ -82,7 +83,7 @@ class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel
 
     fun chooseMealType(value: String) { _state.value = _state.value.copy(mealType = value) }
 
-    fun pay(activity: Activity, lines: List<CartLine>) {
+    fun pay(activity: Activity, lines: List<CartLine>, addressId: String?) {
         if (repository == null || lines.isEmpty()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true, error = null)
@@ -92,7 +93,7 @@ class CheckoutViewModel(private val repository: CheckoutRepository?) : ViewModel
                     items += CheckoutItem(line.mealId, line.quantity)
                     for (addOn in line.addOns) items += CheckoutItem(addOn.id, addOn.quantity * line.quantity)
                 }
-                val request = PaymentOrderRequest(items, _state.value.appliedCoupon?.code, _state.value.mealType)
+                val request = PaymentOrderRequest(items, _state.value.appliedCoupon?.code, _state.value.mealType, addressId = addressId)
                 if (_state.value.paymentChoice == PaymentChoice.Wallet) {
                     val result = repository.payWithWallet(request)
                     _state.value = _state.value.copy(loading = false, paymentComplete = result.verified, completedOrderId = result.orderId, wallet = _state.value.wallet?.copy(balance = result.balance))

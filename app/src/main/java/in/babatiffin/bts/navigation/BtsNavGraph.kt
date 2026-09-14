@@ -352,7 +352,9 @@ fun BtsNavGraph(
                     onNutrition = { navigate(BtsDestination.Nutrition.route) },
                     onReferrals = { navigate(BtsDestination.Referrals.route) },
                     onSupport = { navigate(BtsDestination.Support.route) },
-                    onSignOut = authViewModel::signOut,
+                    onSignOut = {
+                        PushRegistration.unregisterSignedInUser(context, authState.userId, authViewModel::signOut)
+                    },
                 )
             }
             composable(BtsDestination.Support.route) {
@@ -382,7 +384,7 @@ fun BtsNavGraph(
                     address = deliveryAddress,
                     addressesLoading = customerState.loading,
                     onManageAddress = { navigate(BtsDestination.AddAddress.route) },
-                    onPay = { activity -> checkoutViewModel.pay(activity, cartLines) },
+                    onPay = { activity -> checkoutViewModel.pay(activity, cartLines, deliveryAddress?.id) },
                 )
             }
             composable(
