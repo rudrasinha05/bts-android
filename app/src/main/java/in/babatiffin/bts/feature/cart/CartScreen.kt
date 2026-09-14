@@ -23,6 +23,7 @@ fun CartScreen(
     lines: List<CartLine>,
     onChangeQuantity: (CartLine, Int) -> Unit,
     onRemove: (String) -> Unit,
+    onEditAddOns: (CartLine) -> Unit,
     onClear: () -> Unit,
     onCheckout: () -> Unit,
     modifier: Modifier = Modifier,
@@ -51,6 +52,9 @@ fun CartScreen(
                                 Button(onClick = { onChangeQuantity(line, 1) }, enabled = line.quantity < 20) { Text("+") }
                                 TextButton(onClick = { onRemove(line.id) }) { Text("Remove") }
                             }
+                            OutlinedButton(onClick = { onEditAddOns(line) }, modifier = Modifier.fillMaxWidth()) {
+                                Text("Edit add-ons")
+                            }
                         }
                     }
                 }
@@ -61,7 +65,7 @@ fun CartScreen(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 8.dp),
                     )
-                    Text("Delivery charges, taxes and checkout are calculated in the payment milestone.")
+                    Text("Delivery details, coupon and payment method are confirmed at secure checkout.")
                     Button(onClick = onCheckout, modifier = Modifier.fillMaxWidth()) { Text("Continue to checkout") }
                 }
             }

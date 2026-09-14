@@ -363,6 +363,10 @@ fun BtsNavGraph(
                     lines = cartLines,
                     onChangeQuantity = cartViewModel::changeQuantity,
                     onRemove = cartViewModel::remove,
+                    onEditAddOns = { line ->
+                        quickAddLineId = line.id
+                        quickAddMealId = line.mealId
+                    },
                     onClear = cartViewModel::clear,
                     onCheckout = { navigate(BtsDestination.Checkout.route) },
                 )

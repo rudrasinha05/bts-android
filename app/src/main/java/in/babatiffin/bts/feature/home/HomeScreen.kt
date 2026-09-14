@@ -23,8 +23,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +43,7 @@ import com.babatiffin.bts.feature.menu.MealImage
 import kotlinx.coroutines.delay
 import java.util.Calendar
 import com.babatiffin.bts.domain.AppRules
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -84,10 +91,11 @@ fun HomeScreen(
 private fun PromotionSlideshow(promotions: List<Meal>) {
     if (promotions.isEmpty()) return
     val pagerState = rememberPagerState(pageCount = { promotions.size })
+    val scope = rememberCoroutineScope()
     LaunchedEffect(promotions.size) {
         if (promotions.size > 1) {
             while (true) {
-                delay(4_000)
+                delay(5_000)
                 pagerState.animateScrollToPage((pagerState.currentPage + 1) % promotions.size)
             }
         }
@@ -106,7 +114,10 @@ private fun PromotionSlideshow(promotions: List<Meal>) {
                 }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { scope.launch { pagerState.animateScrollToPage((pagerState.currentPage - 1 + promotions.size) % promotions.size) } }) {
+                Icon(Icons.Default.ChevronLeft, contentDescription = "Previous promotion")
+            }
             repeat(promotions.size) { index ->
                 Spacer(
                     Modifier.size(if (pagerState.currentPage == index) 18.dp else 7.dp, 7.dp)
@@ -114,27 +125,31 @@ private fun PromotionSlideshow(promotions: List<Meal>) {
                         .background(if (pagerState.currentPage == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                 )
             }
+            IconButton(onClick = { scope.launch { pagerState.animateScrollToPage((pagerState.currentPage + 1) % promotions.size) } }) {
+                Icon(Icons.Default.ChevronRight, contentDescription = "Next promotion")
+            }
         }
     }
 }
 
 private fun promotionalMeals(meals: List<Meal>): List<Meal> {
-    if (meals.isEmpty()) return fallbackPromotions
     val keywords = listOf("biryani", "paneer", "chicken", "breakfast", "fish")
     val selected = keywords.mapNotNull { keyword ->
         meals.firstOrNull { it.name.contains(keyword, ignoreCase = true) || it.category.equals(keyword, ignoreCase = true) }
     }.distinctBy(Meal::id)
-    return (selected + meals).distinctBy(Meal::id).take(6)
+    return (offerPromotions + selected + meals).distinctBy(Meal::id).take(11)
 }
 
-private val fallbackPromotions = listOf(
-    Meal("promo-biryani", "Chicken Biryani", "Slow-cooked biryani with fragrant rice and homestyle spices.", "special", "chicken", "regular", 0.0, emptyList(), emptyList(), null),
-    Meal("promo-paneer", "Shahi Paneer", "Creamy paneer favourite for a comforting meal.", "dinner", "veg", "regular", 0.0, emptyList(), emptyList(), null),
-    Meal("promo-breakfast", "Idli Sambar", "A light and wholesome start to your day.", "breakfast", "veg", "regular", 0.0, emptyList(), emptyList(), null),
-    Meal("promo-fish", "Fish Curry", "Fresh fish cooked in a rich homestyle curry.", "dinner", "fish", "regular", 0.0, emptyList(), emptyList(), null),
+private val offerPromotions = listOf(
+    Meal("offer-free-meals", "1 Day → 2 Meals FREE", "Two meals free for a new customer's first qualifying order.", "special", "veg", "regular", 0.0, emptyList(), emptyList(), null),
+    Meal("offer-streak", "3-Day Meal Streak", "Complete breakfast, lunch and dinner for three consecutive days to unlock the offer.", "breakfast", "veg", "regular", 0.0, emptyList(), emptyList(), null),
+    Meal("offer-subscribe", "Subscribe & Save", "Save with an eligible monthly or multi-day subscription.", "dinner", "veg", "regular", 0.0, emptyList(), emptyList(), null),
+    Meal("offer-refer", "Refer & Eat", "Both customers earn referral credit after a qualifying first order.", "special", "veg", "regular", 0.0, emptyList(), emptyList(), null),
+    Meal("offer-loyalty", "BTS Loyalty Streak", "Complete consecutive meals to unlock an eligible meal or add-on reward.", "lunch", "veg", "regular", 0.0, emptyList(), emptyList(), null),
 )
 
 private fun promotionTitle(meal: Meal): String = when {
+    meal.id.startsWith("offer-") -> meal.name
     meal.name.contains("biryani", ignoreCase = true) -> "Biryani special"
     meal.foodType.equals("chicken", ignoreCase = true) -> "Chicken favourite"
     meal.foodType.equals("fish", ignoreCase = true) -> "Fresh fish special"

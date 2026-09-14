@@ -62,6 +62,11 @@ private val imageIndexByKey = (
     ).split(' ').withIndex().associate { it.value to it.index }
 
 private val aliases = mapOf(
+    "1_day_2_meals_free" to "chicken_biryani",
+    "3_day_meal_streak" to "idli_sambar",
+    "subscribe_save" to "shahi_paneer",
+    "refer_eat" to "veg_biryani",
+    "bts_loyalty_streak" to "paneer_curry",
     "2_boiled_eggs" to "boiled_eggs",
     "aloo_paratha_with_curd" to "paratha_curd",
     "boondi_veg_raita" to "raita",
